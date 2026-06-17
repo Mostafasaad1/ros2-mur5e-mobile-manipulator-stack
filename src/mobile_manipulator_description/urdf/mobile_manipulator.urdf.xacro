@@ -10,7 +10,7 @@
   <!-- Parameters for UR5e -->
   <xacro:arg name="ur_type" default="ur5e" />
   <xacro:arg name="tf_prefix" default="ur5e_" />
-  <xacro:arg name="joint_limit_params" default="$(find ur_description)/config/$(arg ur_type)/joint_limits.yaml" />
+  <xacro:arg name="joint_limit_params" default="$(find mobile_manipulator_description)/config/ur5e_joint_limits.yaml" />
   <xacro:arg name="kinematics_params" default="$(find ur_description)/config/$(arg ur_type)/default_kinematics.yaml" />
   <xacro:arg name="physical_params" default="$(find ur_description)/config/$(arg ur_type)/physical_parameters.yaml" />
   <xacro:arg name="visual_params" default="$(find ur_description)/config/$(arg ur_type)/visual_parameters.yaml" />
@@ -26,6 +26,22 @@
   <joint name="mir_to_ur5e_joint" type="fixed">
     <parent link="surface" />
     <child link="ur5e_mount_link" />
+    <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
+  </joint>
+
+  <!-- Safety collision volume for the mobile base to prevent self-collision -->
+  <link name="safety_collision_volume">
+    <collision>
+      <origin xyz="0.0 0.0 -0.15" rpy="0.0 0.0 0.0" />
+      <geometry>
+        <cylinder radius="0.50" length="0.40" />
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="safety_collision_joint" type="fixed">
+    <parent link="surface" />
+    <child link="safety_collision_volume" />
     <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
   </joint>
 
