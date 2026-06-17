@@ -1,0 +1,27 @@
+planning_pipelines:
+  - ompl
+
+default_planning_pipeline: ompl
+
+# Workspace bounds: arm reaches ~0.85m, centred around robot origin
+ompl:
+  planning_plugins:
+    - ompl_interface/OMPLPlanner
+  request_adapters:
+    - default_planning_request_adapters/ResolveConstraintFrames
+    - default_planning_request_adapters/ValidateWorkspaceBounds
+    - default_planning_request_adapters/CheckStartStateBounds
+    - default_planning_request_adapters/CheckStartStateCollision
+  response_adapters:
+    - default_planning_response_adapters/AddTimeOptimalParameterization
+  # Default workspace volume for all planning groups (metres)
+  default_workspace_bounds: 2.0
+  planner_configs:
+    RRTConnectkConfigDefault:
+      type: geometric::RRTConnect
+      range: 0.0
+  ur_manipulator:
+    planner_configs:
+      - RRTConnectkConfigDefault
+    projection_evaluator: joints(shoulder_pan_joint,shoulder_lift_joint)
+    longest_valid_segment_fraction: 0.005
