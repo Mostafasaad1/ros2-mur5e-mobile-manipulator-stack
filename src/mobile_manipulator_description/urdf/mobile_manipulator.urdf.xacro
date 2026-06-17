@@ -1,0 +1,49 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://wiki.ros.org/xacro" name="mobile_manipulator">
+
+  <!-- Include MiR250 base description -->
+  <xacro:include filename="$(find mir_description)/urdf/mir.urdf.xacro" />
+
+  <!-- Include UR5e arm description macro -->
+  <xacro:include filename="$(find ur_description)/urdf/ur_macro.xacro" />
+
+  <!-- Parameters for UR5e -->
+  <xacro:arg name="ur_type" default="ur5e" />
+  <xacro:arg name="tf_prefix" default="ur5e_" />
+  <xacro:arg name="joint_limit_params" default="$(find ur_description)/config/$(arg ur_type)/joint_limits.yaml" />
+  <xacro:arg name="kinematics_params" default="$(find ur_description)/config/$(arg ur_type)/default_kinematics.yaml" />
+  <xacro:arg name="physical_params" default="$(find ur_description)/config/$(arg ur_type)/physical_parameters.yaml" />
+  <xacro:arg name="visual_params" default="$(find ur_description)/config/$(arg ur_type)/visual_parameters.yaml" />
+  <xacro:arg name="safety_limits" default="false" />
+  <xacro:arg name="safety_pos_margin" default="0.15" />
+  <xacro:arg name="safety_k_position" default="20" />
+  <xacro:arg name="force_abs_paths" default="false" />
+
+  <!-- Intermediate mounting link to attach UR5e onto MiR surface -->
+  <link name="ur5e_mount_link" />
+
+  <!-- T005: Fixed joint attaching the UR5e base to the MiR surface -->
+  <joint name="mir_to_ur5e_joint" type="fixed">
+    <parent link="surface" />
+    <child link="ur5e_mount_link" />
+    <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
+  </joint>
+
+  <!-- Instantiate the UR5e arm -->
+  <xacro:ur_robot
+    name="ur5e"
+    tf_prefix="$(arg tf_prefix)"
+    parent="ur5e_mount_link"
+    joint_limits_parameters_file="$(arg joint_limit_params)"
+    kinematics_parameters_file="$(arg kinematics_params)"
+    physical_parameters_file="$(arg physical_params)"
+    visual_parameters_file="$(arg visual_params)"
+    safety_limits="$(arg safety_limits)"
+    safety_pos_margin="$(arg safety_pos_margin)"
+    safety_k_position="$(arg safety_k_position)"
+    force_abs_paths="$(arg force_abs_paths)"
+  >
+    <origin xyz="0 0 0" rpy="0 0 0" />
+  </xacro:ur_robot>
+
+</robot>
