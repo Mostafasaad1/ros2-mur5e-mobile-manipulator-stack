@@ -1,0 +1,94 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+  <!--
+    realsense_d435.xacro - Gazebo Harmonic (ros_gz) compatible RGB-D camera macro.
+    Sensor data is published to Gazebo topic "${topic}" and bridged to ROS 2
+    via ros_gz_bridge.
+
+    Params:
+      prefix : link/joint name prefix (e.g. "camera")
+      parent : parent link name (e.g. "base_link")
+      topic  : Gazebo topic name (e.g. "camera")
+      xyz    : joint origin position "x y z"
+      rpy    : joint origin rotation "r p y"
+  -->
+  <xacro:macro name="realsense_d435" params="prefix parent topic xyz rpy">
+
+    <!-- Fixed joint connecting parent link to the camera -->
+    <joint name="${parent}_to_${prefix}_joint" type="fixed">
+      <parent link="${parent}"/>
+      <child link="${prefix}_link"/>
+      <origin xyz="${xyz}" rpy="${rpy}"/>
+    </joint>
+
+    <!-- Camera link - representation of the physical RealSense camera -->
+    <link name="${prefix}_link">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <box size="0.025 0.090 0.025"/>
+        </geometry>
+        <material name="realsense_grey">
+          <color rgba="0.4 0.4 0.4 1.0"/>
+        </material>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <box size="0.025 0.090 0.025"/>
+        </geometry>
+      </collision>
+      <inertial>
+        <mass value="0.072"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <inertia ixx="0.000052" ixy="0" ixz="0" iyy="0.000007" iyz="0" izz="0.000052"/>
+      </inertial>
+    </link>
+
+    <!-- Depth frame and optical frame to follow standard ROS coordinate conventions -->
+    <joint name="${prefix}_depth_joint" type="fixed">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <parent link="${prefix}_link" />
+      <child link="${prefix}_depth_frame" />
+    </joint>
+    <link name="${prefix}_depth_frame"/>
+
+    <joint name="${prefix}_depth_optical_joint" type="fixed">
+      <origin xyz="0 0 0" rpy="-1.57079632679 0 -1.57079632679" />
+      <parent link="${prefix}_depth_frame" />
+      <child link="${prefix}_depth_optical_frame" />
+    </joint>
+    <link name="${prefix}_depth_optical_frame"/>
+
+    <!-- Gazebo Harmonic sensor: rgbd_camera.
+         The <sensor> block lives inside <gazebo reference="..."> so it is
+         correctly associated with the link in the SDF that Gazebo generates. -->
+    <gazebo reference="${prefix}_link">
+      <material>
+        <ambient>0.4 0.4 0.4 1</ambient>
+        <diffuse>0.4 0.4 0.4 1</diffuse>
+      </material>
+      <sensor name="${prefix}_sensor" type="rgbd_camera">
+        <pose>0 0 0 0 0 0</pose>
+        <topic>${topic}</topic>
+        <gz_frame_id>${prefix}_link</gz_frame_id>
+        <update_rate>60</update_rate>
+        <always_on>true</always_on>
+        <visualize>true</visualize>
+        <camera>
+          <horizontal_fov>1.50098</horizontal_fov>
+          <image>
+            <width>640</width>
+            <height>480</height>
+            <format>R8G8B8</format>
+          </image>
+          <clip>
+            <near>0.1</near>
+            <far>10.0</far>
+          </clip>
+        </camera>
+      </sensor>
+    </gazebo>
+
+  </xacro:macro>
+</robot>

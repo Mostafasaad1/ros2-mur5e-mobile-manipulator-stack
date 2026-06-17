@@ -1,0 +1,70 @@
+# Joints limits
+#
+# Sources:
+#
+#  - UR5 User Manual, Universal Robots, UR5/CB3, Version 3.13
+#    https://s3-eu-west-1.amazonaws.com/ur-support-site/69371/99202_UR5_User_Manual_en_Global.pdf
+#  - Support > Articles > UR articles > Max. joint torques
+#    https://www.universal-robots.com/articles/ur-articles/max-joint-torques
+#    retrieved: 2020-06-16, last modified: 2020-06-09
+joint_limits:
+  shoulder_pan_joint:
+    has_acceleration_limits: true
+    max_acceleration: 5.0
+    has_effort_limits: true
+    has_position_limits: true
+    has_velocity_limits: true
+    max_effort: 150.0
+    max_position: !degrees  360.0
+    max_velocity: !degrees  180.0
+    min_position: !degrees -360.0
+  shoulder_lift_joint:
+    has_acceleration_limits: true
+    max_acceleration: 5.0
+    has_effort_limits: true
+    has_position_limits: true
+    has_velocity_limits: true
+    max_effort: 150.0
+    max_position: !degrees  360.0
+    max_velocity: !degrees  180.0
+    min_position: !degrees -360.0
+  elbow_joint:
+    has_acceleration_limits: true
+    max_acceleration: 5.0
+    has_effort_limits: true
+    has_position_limits: true
+    has_velocity_limits: true
+    max_effort: 150.0
+    max_position: !degrees  180.0
+    max_velocity: !degrees  180.0
+    min_position: !degrees -180.0
+  wrist_1_joint:
+    has_acceleration_limits: true
+    max_acceleration: 5.0
+    has_effort_limits: true
+    has_position_limits: true
+    has_velocity_limits: true
+    max_effort: 28.0
+    max_position: !degrees  360.0
+    max_velocity: !degrees  180.0
+    min_position: !degrees -360.0
+  wrist_2_joint:
+    has_acceleration_limits: true
+    max_acceleration: 5.0
+    has_effort_limits: true
+    has_position_limits: true
+    has_velocity_limits: true
+    max_effort: 28.0
+    max_position: !degrees  360.0
+    max_velocity: !degrees  180.0
+    min_position: !degrees -360.0
+  wrist_3_joint:
+    has_acceleration_limits: true
+    max_acceleration: 5.0
+    has_effort_limits: true
+    has_position_limits: true
+    has_velocity_limits: true
+    max_effort: 28.0
+    max_position: !degrees  360.0
+    max_velocity: !degrees  180.0
+    min_position: !degrees -360.0

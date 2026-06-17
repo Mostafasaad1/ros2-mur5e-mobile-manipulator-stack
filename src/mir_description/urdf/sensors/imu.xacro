@@ -1,0 +1,78 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+  <!--
+    imu.xacro - Gazebo Harmonic (ros_gz) compatible IMU macro.
+    Sensor data is published to Gazebo topic "${topic}" and bridged to ROS 2
+    via ros_gz_bridge in the spawn_maze.launch.py file.
+
+    Params:
+      prefix : link/joint name prefix (e.g. "imu")
+      parent : parent link name (e.g. "base_link")
+      topic  : Gazebo topic name (e.g. "/imu")
+      xyz    : joint origin position  "x y z"
+      rpy    : joint origin rotation  "r p y"
+  -->
+  <xacro:macro name="imu_sensor" params="prefix parent topic xyz rpy">
+
+    <!-- Fixed joint connecting parent link to the IMU -->
+    <joint name="${parent}_to_${prefix}_joint" type="fixed">
+      <parent link="${parent}"/>
+      <child link="${prefix}_link"/>
+      <origin xyz="${xyz}" rpy="${rpy}"/>
+    </joint>
+
+    <!-- IMU link - small box representing the physical IMU board -->
+    <link name="${prefix}_link">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <box size="0.04 0.04 0.01"/>
+        </geometry>
+        <material name="imu_red">
+          <color rgba="0.8 0.1 0.1 1.0"/>
+        </material>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <box size="0.04 0.04 0.01"/>
+        </geometry>
+      </collision>
+      <inertial>
+        <mass value="0.015"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <inertia ixx="0.000001" ixy="0" ixz="0" iyy="0.000001" iyz="0" izz="0.000001"/>
+      </inertial>
+    </link>
+
+    <!-- Gazebo Harmonic sensor: imu.
+         The <sensor> block lives inside <gazebo reference="..."> so it is
+         correctly associated with the link in the SDF that Gazebo generates. -->
+    <gazebo reference="${prefix}_link">
+      <material>
+        <ambient>0.8 0.1 0.1 1</ambient>
+        <diffuse>0.8 0.1 0.1 1</diffuse>
+      </material>
+      <sensor name="${prefix}_sensor" type="imu">
+        <pose>0 0 0 0 0 0</pose>
+        <topic>${topic}</topic>
+        <gz_frame_id>${prefix}_link</gz_frame_id>
+        <always_on>true</always_on>
+        <update_rate>50</update_rate>
+        <visualize>true</visualize>
+        <imu>
+          <angular_velocity>
+            <x><noise type="gaussian"><mean>0</mean><stddev>0.009</stddev></noise></x>
+            <y><noise type="gaussian"><mean>0</mean><stddev>0.009</stddev></noise></y>
+            <z><noise type="gaussian"><mean>0</mean><stddev>0.009</stddev></noise></z>
+          </angular_velocity>
+          <linear_acceleration>
+            <x><noise type="gaussian"><mean>0</mean><stddev>0.021</stddev></noise></x>
+            <y><noise type="gaussian"><mean>0</mean><stddev>0.021</stddev></noise></y>
+            <z><noise type="gaussian"><mean>0</mean><stddev>0.021</stddev></noise></z>
+          </linear_acceleration>
+        </imu>
+      </sensor>
+    </gazebo>
+  </xacro:macro>
+</robot>

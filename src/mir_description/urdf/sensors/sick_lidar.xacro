@@ -1,0 +1,93 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+  <!--
+    sick_lidar.xacro - Gazebo Harmonic (ros_gz) compatible LiDAR macro.
+    Sensor data is published to Gazebo topic "${topic}" and bridged to ROS 2
+    via ros_gz_bridge in the spawn_maze.launch.py file.
+
+    Params:
+      prefix : link/joint name prefix (e.g. "front_laser")
+      parent : parent link name (e.g. "base_link")
+      topic  : Gazebo topic name (e.g. "/scan")
+      xyz    : joint origin position  "x y z"
+      rpy    : joint origin rotation  "r p y"
+  -->
+  <xacro:macro name="sick_lidar" params="prefix parent topic xyz rpy">
+
+    <!-- Fixed joint connecting parent link to the scanner -->
+    <joint name="${parent}_to_${prefix}_joint" type="fixed">
+      <parent link="${parent}"/>
+      <child link="${prefix}_link"/>
+      <origin xyz="${xyz}" rpy="${rpy}"/>
+    </joint>
+
+    <!-- Scanner link with visual/collision/inertial -->
+    <link name="${prefix}_link">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <mesh filename="package://mir_description/meshes/visual/sick_lms-100.stl"/>
+        </geometry>
+        <material name="lidar_black">
+          <color rgba="0.1 0.1 0.1 1.0"/>
+        </material>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <mesh filename="package://mir_description/meshes/visual/sick_lms-100.stl"/>
+        </geometry>
+      </collision>
+      <inertial>
+        <mass value="1.2"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <inertia ixx="0.005825" ixy="0" ixz="0" iyy="0.005856" iyz="0" izz="0.004836"/>
+      </inertial>
+    </link>
+
+    <!-- Gazebo Harmonic sensor: gpu_lidar.
+         The <sensor> block lives inside <gazebo reference="..."> so it is
+         correctly associated with the link in the SDF that Gazebo generates. -->
+    <gazebo reference="${prefix}_link">
+      <material>
+        <ambient>0.1 0.1 0.1 1</ambient>
+        <diffuse>0.1 0.1 0.1 1</diffuse>
+      </material>
+      <sensor name="${prefix}_sensor" type="gpu_lidar">
+        <pose>0 0 0 0 0 0</pose>
+        <topic>${topic}</topic>
+        <gz_frame_id>${prefix}_link</gz_frame_id>
+        <update_rate>30</update_rate>
+        <visualize>false</visualize>
+        <always_on>true</always_on>
+        <lidar>
+          <scan>
+            <horizontal>
+              <!-- 270° FOV: -135° to +135° -->
+              <samples>720</samples>
+              <resolution>1</resolution>
+              <min_angle>-1.5707963</min_angle>
+              <max_angle>1.5707963</max_angle>
+            </horizontal>
+            <vertical>
+              <samples>1</samples>
+              <resolution>1</resolution>
+              <min_angle>0</min_angle>
+              <max_angle>0</max_angle>
+            </vertical>
+          </scan>
+          <range>
+            <min>0.1</min>
+            <max>30.0</max>
+            <resolution>0.01</resolution>
+          </range>
+          <noise>
+            <type>gaussian</type>
+            <mean>0.0</mean>
+            <stddev>0.01</stddev>
+          </noise>
+        </lidar>
+      </sensor>
+    </gazebo>
+  </xacro:macro>
+</robot>

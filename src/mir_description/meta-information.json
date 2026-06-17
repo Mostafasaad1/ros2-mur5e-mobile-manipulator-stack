@@ -1,0 +1,16 @@
+{
+    "robots": [
+        {
+            "name": "MiR 100",
+            "type": "mobile robot",
+            "manufacturer": "Mobile Industrial Robots",
+            "xacro-generated": true,
+            "urdf": [
+                "urdf/mir.urdf"
+            ],
+            "variant": null,
+            "source-link": "https://github.com/DFKI-NI/mir_robot/tree/5a44ff5593dc48f9ec74c0e83d15ed9dec33069e/mir_description",
+            "id": 101
+        }
+    ]
+}
