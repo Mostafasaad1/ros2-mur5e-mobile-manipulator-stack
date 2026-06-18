@@ -128,17 +128,23 @@ def generate_launch_description():
         output='screen',
     )
 
-    diff_drive_controller_spawner = Node(
-        package='controller_manager',
-        executable='spawner',
-        arguments=[
-            'diff_drive_controller',
-            '--controller-ros-args',
-            '-r ~/cmd_vel:=/cmd_vel',
-            '--controller-ros-args',
-            '-r ~/odom:=/odom'
-        ],
+    # Bridge cmd_vel, odom, and tf from Gazebo to ROS 2 for the native DiffDrive plugin
+    base_bridge = Node(
+        package='ros_gz_bridge',
+        executable='parameter_bridge',
+        name='base_bridge',
         output='screen',
+        arguments=[
+            '/cmd_vel_gz@geometry_msgs/msg/Twist]gz.msgs.Twist',
+            '/odom_gz@nav_msgs/msg/Odometry[gz.msgs.Odometry',
+            '/tf_gz@tf2_msgs/msg/TFMessage[gz.msgs.Pose_V',
+        ],
+        remappings=[
+            ('/cmd_vel_gz', '/cmd_vel'),
+            ('/odom_gz', '/odom'),
+            ('/tf_gz', '/tf'),
+        ],
+        parameters=[{'use_sim_time': use_sim_time}]
     )
 
     joint_trajectory_controller_spawner = Node(
@@ -150,18 +156,11 @@ def generate_launch_description():
 
     # Sequence Spawners:
     # 1. Wait for spawn_entity to finish -> start joint_state_broadcaster
-    # 2. Wait for joint_state_broadcaster to finish -> start diff_drive and joint_trajectory
+    # 2. Wait for joint_state_broadcaster to finish -> start joint_trajectory
     load_joint_state_broadcaster = RegisterEventHandler(
         event_handler=OnProcessExit(
             target_action=spawn_entity,
             on_exit=[joint_state_broadcaster_spawner],
-        )
-    )
-
-    load_diff_drive_controller = RegisterEventHandler(
-        event_handler=OnProcessExit(
-            target_action=joint_state_broadcaster_spawner,
-            on_exit=[diff_drive_controller_spawner],
         )
     )
 
@@ -203,7 +202,7 @@ def generate_launch_description():
         robot_state_publisher,
         spawn_entity,
         clock_bridge,
+        base_bridge,
         load_joint_state_broadcaster,
-        load_diff_drive_controller,
         load_joint_trajectory_controller,
     ])

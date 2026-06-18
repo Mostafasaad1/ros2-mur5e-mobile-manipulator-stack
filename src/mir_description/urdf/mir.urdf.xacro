@@ -401,44 +401,28 @@
   <gazebo reference="left_wheel_link">
     <mu1>1.0</mu1>
     <mu2>1.0</mu2>
-    <kp>10000000.0</kp>
-    <kd>1.0</kd>
-    <minDepth>0.001</minDepth>
+    <fdir1>1 0 0</fdir1>
   </gazebo>
   <gazebo reference="right_wheel_link">
     <mu1>1.0</mu1>
     <mu2>1.0</mu2>
-    <kp>10000000.0</kp>
-    <kd>1.0</kd>
-    <minDepth>0.001</minDepth>
+    <fdir1>1 0 0</fdir1>
   </gazebo>
   <gazebo reference="fl_caster_wheel_link">
-    <mu1>0.0</mu1>
-    <mu2>0.0</mu2>
-    <kp>10000000.0</kp>
-    <kd>1.0</kd>
-    <minDepth>0.001</minDepth>
+    <mu1>0.001</mu1>
+    <mu2>0.001</mu2>
   </gazebo>
   <gazebo reference="fr_caster_wheel_link">
-    <mu1>0.0</mu1>
-    <mu2>0.0</mu2>
-    <kp>10000000.0</kp>
-    <kd>1.0</kd>
-    <minDepth>0.001</minDepth>
+    <mu1>0.001</mu1>
+    <mu2>0.001</mu2>
   </gazebo>
   <gazebo reference="bl_caster_wheel_link">
-    <mu1>0.0</mu1>
-    <mu2>0.0</mu2>
-    <kp>10000000.0</kp>
-    <kd>1.0</kd>
-    <minDepth>0.001</minDepth>
+    <mu1>0.001</mu1>
+    <mu2>0.001</mu2>
   </gazebo>
   <gazebo reference="br_caster_wheel_link">
-    <mu1>0.0</mu1>
-    <mu2>0.0</mu2>
-    <kp>10000000.0</kp>
-    <kd>1.0</kd>
-    <minDepth>0.001</minDepth>
+    <mu1>0.001</mu1>
+    <mu2>0.001</mu2>
   </gazebo>
 
 
