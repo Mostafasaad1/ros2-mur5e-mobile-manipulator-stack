@@ -4,7 +4,7 @@
   <!-- Include the base URDF/Xacro -->
   <xacro:include filename="$(find mobile_manipulator_description)/urdf/mobile_manipulator.urdf.xacro" />
 
-  <!-- Gazebo-specific joint state publisher for the UR5e joints -->
+  <!-- Gazebo-specific joint state publisher for the UR5e joints and passive caster joints -->
   <gazebo>
     <plugin filename="gz-sim-joint-state-publisher-system"
             name="gz::sim::systems::JointStatePublisher">
@@ -15,6 +15,14 @@
       <joint_name>ur5e_wrist_1_joint</joint_name>
       <joint_name>ur5e_wrist_2_joint</joint_name>
       <joint_name>ur5e_wrist_3_joint</joint_name>
+      <joint_name>fl_caster_rotation_joint</joint_name>
+      <joint_name>fl_caster_wheel_joint</joint_name>
+      <joint_name>fr_caster_rotation_joint</joint_name>
+      <joint_name>fr_caster_wheel_joint</joint_name>
+      <joint_name>bl_caster_rotation_joint</joint_name>
+      <joint_name>bl_caster_wheel_joint</joint_name>
+      <joint_name>br_caster_rotation_joint</joint_name>
+      <joint_name>br_caster_wheel_joint</joint_name>
     </plugin>
   </gazebo>
 
@@ -70,6 +78,39 @@
     </joint>
     <joint name="ur5e_wrist_3_joint">
       <command_interface name="position" />
+      <state_interface name="position" />
+      <state_interface name="velocity" />
+    </joint>
+    <!-- Passive Caster Joints -->
+    <joint name="fl_caster_rotation_joint">
+      <state_interface name="position" />
+      <state_interface name="velocity" />
+    </joint>
+    <joint name="fl_caster_wheel_joint">
+      <state_interface name="position" />
+      <state_interface name="velocity" />
+    </joint>
+    <joint name="fr_caster_rotation_joint">
+      <state_interface name="position" />
+      <state_interface name="velocity" />
+    </joint>
+    <joint name="fr_caster_wheel_joint">
+      <state_interface name="position" />
+      <state_interface name="velocity" />
+    </joint>
+    <joint name="bl_caster_rotation_joint">
+      <state_interface name="position" />
+      <state_interface name="velocity" />
+    </joint>
+    <joint name="bl_caster_wheel_joint">
+      <state_interface name="position" />
+      <state_interface name="velocity" />
+    </joint>
+    <joint name="br_caster_rotation_joint">
+      <state_interface name="position" />
+      <state_interface name="velocity" />
+    </joint>
+    <joint name="br_caster_wheel_joint">
       <state_interface name="position" />
       <state_interface name="velocity" />
     </joint>

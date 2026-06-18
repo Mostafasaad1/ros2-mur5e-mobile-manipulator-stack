@@ -34,7 +34,7 @@ diff_drive_controller:
     twist_covariance_diagonal: [0.001, 0.001, 1000000.0, 1000000.0, 1000000.0, 1000.0]
 
     # Command velocities input
-    use_stamped_vel: false
+    use_stamped_vel: true
 
 joint_trajectory_controller:
   ros__parameters:

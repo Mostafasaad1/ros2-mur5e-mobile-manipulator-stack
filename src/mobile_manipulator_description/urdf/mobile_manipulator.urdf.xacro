@@ -34,7 +34,7 @@
     <collision>
       <origin xyz="0.0 0.0 -0.15" rpy="0.0 0.0 0.0" />
       <geometry>
-        <cylinder radius="0.50" length="0.40" />
+        <cylinder radius="0.50" length="0.30" />
       </geometry>
     </collision>
   </link>

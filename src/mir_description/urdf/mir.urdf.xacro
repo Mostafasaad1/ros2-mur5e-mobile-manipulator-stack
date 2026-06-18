@@ -66,7 +66,7 @@
     <parent link="base_link"/>
     <child link="left_wheel_link"/>
     <axis xyz="0 1 0"/>
-    <limit effort="100" velocity="20.0"/>
+    <limit effort="10000" velocity="20.0"/>
   </joint>
   <link name="left_wheel_link">
     <inertial>
@@ -98,7 +98,7 @@
     <parent link="base_link"/>
     <child link="right_wheel_link"/>
     <axis xyz="0 1 0"/>
-    <limit effort="100" velocity="20.0"/>
+    <limit effort="10000" velocity="20.0"/>
   </joint>
   <link name="right_wheel_link">
     <inertial>
@@ -431,54 +431,36 @@
     <minDepth>0.01</minDepth>
   </gazebo>
   <gazebo reference="fl_caster_wheel_link">
-    <mu1 value="1"/>
-    <mu2 value="1"/>
+    <mu1 value="0.0"/>
+    <mu2 value="0.0"/>
     <kp value="10000000.0"/>
     <kd value="1.0"/>
     <minDepth>0.01</minDepth>
   </gazebo>
   <gazebo reference="fr_caster_wheel_link">
-    <mu1 value="1"/>
-    <mu2 value="1"/>
+    <mu1 value="0.0"/>
+    <mu2 value="0.0"/>
     <kp value="10000000.0"/>
     <kd value="1.0"/>
     <minDepth>0.01</minDepth>
   </gazebo>
   <gazebo reference="bl_caster_wheel_link">
-    <mu1 value="1"/>
-    <mu2 value="1"/>
+    <mu1 value="0.0"/>
+    <mu2 value="0.0"/>
     <kp value="10000000.0"/>
     <kd value="1.0"/>
     <minDepth>0.01</minDepth>
   </gazebo>
   <gazebo reference="br_caster_wheel_link">
-    <mu1 value="1"/>
-    <mu2 value="1"/>
+    <mu1 value="0.0"/>
+    <mu2 value="0.0"/>
     <kp value="10000000.0"/>
     <kd value="1.0"/>
     <minDepth>0.01</minDepth>
   </gazebo>
-  <!-- Gazebo Harmonic: native DiffDrive plugin actuates wheels directly from
-       /cmd_vel and publishes /odom + TF without a separate ROS controller. -->
-  <gazebo>
-    <plugin filename="gz-sim-diff-drive-system"
-            name="gz::sim::systems::DiffDrive">
-      <!-- wheel joints as they appear in the URDF -->
-      <left_joint>left_wheel_joint</left_joint>
-      <right_joint>right_wheel_joint</right_joint>
-      <!-- physical parameters from the URDF -->
-      <wheel_separation>0.445208</wheel_separation>
-      <wheel_radius>0.0625</wheel_radius>
-      <!-- topics — bridged via ros_gz_bridge in spawn_maze.launch.py -->
-      <topic>cmd_vel</topic>
-      <odom_topic>odom</odom_topic>
-      <!-- /tf is what ros_gz_bridge watches; /gazebo/tf was never bridged -->
-      <tf_topic>gazebo_tf</tf_topic>
-      <frame_id>odom</frame_id>
-      <child_frame_id>base_footprint</child_frame_id>
-      <odom_publish_frequency>50</odom_publish_frequency>
-    </plugin>
 
+
+  <gazebo>
     <!-- Gazebo Harmonic: Joint State Publisher to publish wheel/caster angles -->
     <plugin filename="gz-sim-joint-state-publisher-system"
             name="gz::sim::systems::JointStatePublisher">

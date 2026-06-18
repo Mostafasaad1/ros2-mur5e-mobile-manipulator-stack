@@ -10,7 +10,12 @@ from launch.actions import (
 )
 from launch.event_handlers import OnProcessExit
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import Command, LaunchConfiguration, PathJoinSubstitution
+from launch.substitutions import (
+    Command,
+    LaunchConfiguration,
+    PathJoinSubstitution,
+    PythonExpression,
+)
 from launch_ros.actions import Node
 from launch_ros.parameter_descriptions import ParameterValue
 
@@ -25,6 +30,9 @@ def generate_launch_description():
 
     # Launch configurations
     use_sim_time = LaunchConfiguration('use_sim_time', default='true')
+    x_pose = LaunchConfiguration('x_pose', default='0.0')
+    y_pose = LaunchConfiguration('y_pose', default='0.0')
+    z_pose = LaunchConfiguration('z_pose', default='0.15')
 
     # Set GZ_SIM_RESOURCE_PATH to find meshes and worlds
     gz_resource_path = SetEnvironmentVariable(
@@ -42,6 +50,12 @@ def generate_launch_description():
         mobile_manipulator_gazebo_dir,
         'worlds',
         LaunchConfiguration('world')
+    ])
+
+    # Build gz_args depending on headless parameter
+    # If headless is true, run with '-r -s', otherwise '-r'
+    gz_args_prefix = PythonExpression([
+        "'-r -s' if '", LaunchConfiguration('headless', default='false'), "' == 'true' else '-r'"
     ])
 
     # Process Xacro -> robot_description
@@ -73,7 +87,11 @@ def generate_launch_description():
             os.path.join(ros_gz_sim_dir, 'launch', 'gz_sim.launch.py')
         ),
         launch_arguments={
-            'gz_args': f'-r {world_path}',
+            'gz_args': [
+                gz_args_prefix,
+                ' ',
+                world_path
+            ],
             'on_exit_shutdown': 'true',
         }.items()
     )
@@ -87,9 +105,9 @@ def generate_launch_description():
         arguments=[
             '-name', 'mobile_manipulator',
             '-topic', '/robot_description',
-            '-x', '0.0',
-            '-y', '0.0',
-            '-z', '0.15',
+            '-x', x_pose,
+            '-y', y_pose,
+            '-z', z_pose,
         ]
     )
 
@@ -162,6 +180,22 @@ def generate_launch_description():
         DeclareLaunchArgument(
             'world', default_value='testing_world.sdf',
             description='Name of the Gazebo world file to load'
+        ),
+        DeclareLaunchArgument(
+            'headless', default_value='false',
+            description='Run Gazebo in headless mode'
+        ),
+        DeclareLaunchArgument(
+            'x_pose', default_value='0.0',
+            description='Spawn x position'
+        ),
+        DeclareLaunchArgument(
+            'y_pose', default_value='0.0',
+            description='Spawn y position'
+        ),
+        DeclareLaunchArgument(
+            'z_pose', default_value='0.15',
+            description='Spawn z position'
         ),
 
         gz_resource_path,

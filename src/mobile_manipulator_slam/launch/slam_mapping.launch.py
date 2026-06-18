@@ -8,11 +8,11 @@ from launch.actions import (
     IncludeLaunchDescription,
     RegisterEventHandler,
 )
-from launch.event_handlers import OnStateTransition
 from launch.events import matches_action
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import LifecycleNode, Node
+from launch_ros.event_handlers import OnStateTransition
 from launch_ros.events.lifecycle import ChangeState
 from lifecycle_msgs.msg import Transition
 
@@ -24,6 +24,9 @@ def generate_launch_description():
 
     # Launch configurations
     use_sim_time = LaunchConfiguration('use_sim_time', default='true')
+    headless = LaunchConfiguration('headless', default='false')
+    x_pose = LaunchConfiguration('x_pose', default='-2.0')
+    y_pose = LaunchConfiguration('y_pose', default='0.0')
 
     # 1. Include base simulation launch from mobile_manipulator_gazebo
     # We pass the custom maze world file as an argument
@@ -33,7 +36,10 @@ def generate_launch_description():
         ),
         launch_arguments={
             'use_sim_time': use_sim_time,
-            'world': 'simple_maze.sdf'
+            'world': 'simple_maze.sdf',
+            'headless': headless,
+            'x_pose': x_pose,
+            'y_pose': y_pose,
         }.items()
     )
 
@@ -75,27 +81,25 @@ def generate_launch_description():
     # When node is instantiated (unconfigured), transition to configured
     configure_event = EmitEvent(
         event=ChangeState(
-            lifecycle_node_relationship=matches_action(slam_node),
+            lifecycle_node_matcher=matches_action(slam_node),
             transition_id=Transition.TRANSITION_CONFIGURE,
         )
     )
 
     # When transitioning to configured, transition to active
     activate_event = RegisterEventHandler(
-        RegisterEventHandler(
-            event_handler=OnStateTransition(
-                target_lifecycle_node=slam_node,
-                start_state='unconfigured',
-                goal_state='inactive',
-                entities=[
-                    EmitEvent(
-                        event=ChangeState(
-                            lifecycle_node_relationship=matches_action(slam_node),
-                            transition_id=Transition.TRANSITION_ACTIVATE,
-                        )
+        OnStateTransition(
+            target_lifecycle_node=slam_node,
+            start_state='configuring',
+            goal_state='inactive',
+            entities=[
+                EmitEvent(
+                    event=ChangeState(
+                        lifecycle_node_matcher=matches_action(slam_node),
+                        transition_id=Transition.TRANSITION_ACTIVATE,
                     )
-                ],
-            )
+                )
+            ],
         )
     )
 
@@ -118,6 +122,18 @@ def generate_launch_description():
         DeclareLaunchArgument(
             'use_sim_time', default_value='true',
             description='Use simulation clock'
+        ),
+        DeclareLaunchArgument(
+            'headless', default_value='false',
+            description='Run Gazebo in headless mode'
+        ),
+        DeclareLaunchArgument(
+            'x_pose', default_value='-2.0',
+            description='Spawn x position'
+        ),
+        DeclareLaunchArgument(
+            'y_pose', default_value='0.0',
+            description='Spawn y position'
         ),
 
         # Base simulation world & robot spawn

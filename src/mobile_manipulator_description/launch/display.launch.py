@@ -3,9 +3,10 @@ import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
-from launch.substitutions import LaunchConfiguration, Command
+from launch.substitutions import Command, LaunchConfiguration
 from launch_ros.actions import Node
 from launch_ros.parameter_descriptions import ParameterValue
+
 
 def generate_launch_description():
     use_sim_time = LaunchConfiguration('use_sim_time', default='false')
@@ -33,7 +34,7 @@ def generate_launch_description():
         'display.rviz'
     )
 
-    # Static transform from odom to base_footprint if needed for basic rviz visualization without gazebo
+    # Static transform from odom to base_footprint if needed for basic rviz visualization
     static_tf_node = Node(
         package='tf2_ros',
         executable='static_transform_publisher',
