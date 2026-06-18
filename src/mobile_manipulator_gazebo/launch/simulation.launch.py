@@ -10,7 +10,7 @@ from launch.actions import (
 )
 from launch.event_handlers import OnProcessExit
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import Command, LaunchConfiguration
+from launch.substitutions import Command, LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
 from launch_ros.parameter_descriptions import ParameterValue
 
@@ -37,8 +37,12 @@ def generate_launch_description():
         ])
     )
 
-    # Path to the world file
-    world_path = os.path.join(mobile_manipulator_gazebo_dir, 'worlds', 'testing_world.sdf')
+    # Path to the world file (configurable via world launch argument)
+    world_path = PathJoinSubstitution([
+        mobile_manipulator_gazebo_dir,
+        'worlds',
+        LaunchConfiguration('world')
+    ])
 
     # Process Xacro -> robot_description
     xacro_path = os.path.join(
@@ -154,6 +158,10 @@ def generate_launch_description():
         DeclareLaunchArgument(
             'use_sim_time', default_value='true',
             description='Use simulation clock'
+        ),
+        DeclareLaunchArgument(
+            'world', default_value='testing_world.sdf',
+            description='Name of the Gazebo world file to load'
         ),
 
         gz_resource_path,
