@@ -27,12 +27,12 @@
   </gazebo>
 
   <!-- Enable self-collision for the arm links in Gazebo -->
-  <gazebo reference="ur5e_shoulder_link"><self_collide>true</self_collide></gazebo>
-  <gazebo reference="ur5e_upper_arm_link"><self_collide>true</self_collide></gazebo>
-  <gazebo reference="ur5e_forearm_link"><self_collide>true</self_collide></gazebo>
-  <gazebo reference="ur5e_wrist_1_link"><self_collide>true</self_collide></gazebo>
-  <gazebo reference="ur5e_wrist_2_link"><self_collide>true</self_collide></gazebo>
-  <gazebo reference="ur5e_wrist_3_link"><self_collide>true</self_collide></gazebo>
+  <gazebo reference="ur5e_shoulder_link"><self_collide>false</self_collide></gazebo>
+  <gazebo reference="ur5e_upper_arm_link"><self_collide>false</self_collide></gazebo>
+  <gazebo reference="ur5e_forearm_link"><self_collide>false</self_collide></gazebo>
+  <gazebo reference="ur5e_wrist_1_link"><self_collide>false</self_collide></gazebo>
+  <gazebo reference="ur5e_wrist_2_link"><self_collide>false</self_collide></gazebo>
+  <gazebo reference="ur5e_wrist_3_link"><self_collide>false</self_collide></gazebo>
 
   <!-- ros2_control configuration for Gazebo Harmonic -->
   <ros2_control name="gz_ros2_control" type="system">
@@ -86,39 +86,6 @@
     </joint>
     <joint name="ur5e_wrist_3_joint">
       <command_interface name="position" />
-      <state_interface name="position" />
-      <state_interface name="velocity" />
-    </joint>
-    <!-- Passive Caster Joints -->
-    <joint name="fl_caster_rotation_joint">
-      <state_interface name="position" />
-      <state_interface name="velocity" />
-    </joint>
-    <joint name="fl_caster_wheel_joint">
-      <state_interface name="position" />
-      <state_interface name="velocity" />
-    </joint>
-    <joint name="fr_caster_rotation_joint">
-      <state_interface name="position" />
-      <state_interface name="velocity" />
-    </joint>
-    <joint name="fr_caster_wheel_joint">
-      <state_interface name="position" />
-      <state_interface name="velocity" />
-    </joint>
-    <joint name="bl_caster_rotation_joint">
-      <state_interface name="position" />
-      <state_interface name="velocity" />
-    </joint>
-    <joint name="bl_caster_wheel_joint">
-      <state_interface name="position" />
-      <state_interface name="velocity" />
-    </joint>
-    <joint name="br_caster_rotation_joint">
-      <state_interface name="position" />
-      <state_interface name="velocity" />
-    </joint>
-    <joint name="br_caster_wheel_joint">
       <state_interface name="position" />
       <state_interface name="velocity" />
     </joint>

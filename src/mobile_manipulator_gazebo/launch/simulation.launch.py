@@ -30,7 +30,7 @@ def generate_launch_description():
 
     # Launch configurations
     use_sim_time = LaunchConfiguration('use_sim_time', default='true')
-    x_pose = LaunchConfiguration('x_pose', default='0.0')
+    x_pose = LaunchConfiguration('x_pose', default='-6.0')
     y_pose = LaunchConfiguration('y_pose', default='0.0')
     z_pose = LaunchConfiguration('z_pose', default='0.15')
 
@@ -178,7 +178,7 @@ def generate_launch_description():
             description='Use simulation clock'
         ),
         DeclareLaunchArgument(
-            'world', default_value='testing_world.sdf',
+            'world', default_value='nav_workspace.sdf',
             description='Name of the Gazebo world file to load'
         ),
         DeclareLaunchArgument(
@@ -186,7 +186,7 @@ def generate_launch_description():
             description='Run Gazebo in headless mode'
         ),
         DeclareLaunchArgument(
-            'x_pose', default_value='0.0',
+            'x_pose', default_value='-6.0',
             description='Spawn x position'
         ),
         DeclareLaunchArgument(

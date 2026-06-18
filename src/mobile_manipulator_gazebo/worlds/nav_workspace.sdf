@@ -1,0 +1,240 @@
+<?xml version="1.0" ?>
+<sdf version="1.8">
+  <world name="simple_maze">
+
+    <plugin filename="gz-sim-physics-system"
+            name="gz::sim::systems::Physics"/>
+    <plugin filename="gz-sim-user-commands-system"
+            name="gz::sim::systems::UserCommands"/>
+    <plugin filename="gz-sim-scene-broadcaster-system"
+            name="gz::sim::systems::SceneBroadcaster"/>
+    <plugin filename="gz-sim-sensors-system"
+            name="gz::sim::systems::Sensors">
+      <render_engine>ogre2</render_engine>
+    </plugin>
+
+    <light type="directional" name="sun">
+      <cast_shadows>true</cast_shadows>
+      <pose>0 0 10 0 0 0</pose>
+      <diffuse>0.9 0.9 0.9 1</diffuse>
+      <specular>0.2 0.2 0.2 1</specular>
+      <attenuation>
+        <range>1000</range>
+        <constant>0.9</constant>
+        <linear>0.01</linear>
+        <quadratic>0.001</quadratic>
+      </attenuation>
+      <direction>-0.5 0.1 -0.9</direction>
+    </light>
+
+    <!-- ============================================================
+         GROUND PLANE
+    ============================================================ -->
+    <model name="ground_plane">
+      <static>true</static>
+      <link name="link">
+        <collision name="collision">
+          <geometry><plane><normal>0 0 1</normal><size>100 100</size></plane></geometry>
+          <surface><friction><ode><mu>100</mu><mu2>50</mu2></ode></friction></surface>
+        </collision>
+        <visual name="visual">
+          <geometry><plane><normal>0 0 1</normal><size>100 100</size></plane></geometry>
+          <material>
+            <ambient>0.85 0.85 0.85 1</ambient>
+            <diffuse>0.85 0.85 0.85 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ============================================================
+         OUTER WALLS  (world bounds: X∈[-8,8], Y∈[-6,6])
+         Wall thickness 0.2 m, height 2.5 m
+    ============================================================ -->
+
+    <!-- North wall  Y = +6 -->
+    <model name="wall_north">
+      <static>true</static>
+      <pose>0.0 6.0 1.25 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><box><size>16.4 0.2 2.5</size></box></geometry></collision>
+        <visual name="vis">
+          <geometry><box><size>16.4 0.2 2.5</size></box></geometry>
+          <material><ambient>0.6 0.6 0.65 1</ambient><diffuse>0.6 0.6 0.65 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- South wall  Y = -6 -->
+    <model name="wall_south">
+      <static>true</static>
+      <pose>0.0 -6.0 1.25 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><box><size>16.4 0.2 2.5</size></box></geometry></collision>
+        <visual name="vis">
+          <geometry><box><size>16.4 0.2 2.5</size></box></geometry>
+          <material><ambient>0.6 0.6 0.65 1</ambient><diffuse>0.6 0.6 0.65 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- East wall  X = +8 -->
+    <model name="wall_east">
+      <static>true</static>
+      <pose>8.0 0.0 1.25 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><box><size>0.2 12.4 2.5</size></box></geometry></collision>
+        <visual name="vis">
+          <geometry><box><size>0.2 12.4 2.5</size></box></geometry>
+          <material><ambient>0.6 0.6 0.65 1</ambient><diffuse>0.6 0.6 0.65 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- West wall  X = -8 -->
+    <model name="wall_west">
+      <static>true</static>
+      <pose>-8.0 0.0 1.25 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><box><size>0.2 12.4 2.5</size></box></geometry></collision>
+        <visual name="vis">
+          <geometry><box><size>0.2 12.4 2.5</size></box></geometry>
+          <material><ambient>0.6 0.6 0.65 1</ambient><diffuse>0.6 0.6 0.65 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ============================================================
+         CENTRAL DIVIDING WALL at X = 0
+         Two gaps:
+           WIDE  door   : Y ∈ [2.5, 5.5]  → 3.0 m  (preferred route)
+           NARROW passage: Y ∈ [-2.5,-1.0] → 1.5 m  (high-cost route)
+
+         Wall segments:
+           South : Y ∈ [-6.0, -2.5]  center=(0,-4.25)  len=3.5 m
+           Middle: Y ∈ [-1.0,  2.5]  center=(0, 0.75)  len=3.5 m
+           North : Y ∈ [ 5.5,  6.0]  center=(0, 5.75)  len=0.5 m
+    ============================================================ -->
+
+    <model name="divider_south">
+      <static>true</static>
+      <pose>0.0 -4.25 1.25 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><box><size>0.2 3.5 2.5</size></box></geometry></collision>
+        <visual name="vis">
+          <geometry><box><size>0.2 3.5 2.5</size></box></geometry>
+          <material><ambient>0.4 0.55 0.7 1</ambient><diffuse>0.4 0.55 0.7 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- NARROW PASSAGE label: Y ∈ [-2.5, -1.0], width = 1.5 m -->
+
+    <model name="divider_middle">
+      <static>true</static>
+      <pose>0.0 0.75 1.25 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><box><size>0.2 3.5 2.5</size></box></geometry></collision>
+        <visual name="vis">
+          <geometry><box><size>0.2 3.5 2.5</size></box></geometry>
+          <material><ambient>0.4 0.55 0.7 1</ambient><diffuse>0.4 0.55 0.7 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- WIDE DOOR label: Y ∈ [2.5, 5.5], width = 3.0 m -->
+
+    <model name="divider_north">
+      <static>true</static>
+      <pose>0.0 5.75 1.25 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><box><size>0.2 0.5 2.5</size></box></geometry></collision>
+        <visual name="vis">
+          <geometry><box><size>0.2 0.5 2.5</size></box></geometry>
+          <material><ambient>0.4 0.55 0.7 1</ambient><diffuse>0.4 0.55 0.7 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ============================================================
+         ZONE A (West, X ∈ [-8, 0])
+         Robot spawns at (-6, 0).
+         One pillar obstacle forces interesting navigation.
+    ============================================================ -->
+
+    <model name="pillar_a">
+      <static>true</static>
+      <pose>-3.5 3.0 1.25 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><box><size>0.5 0.5 2.5</size></box></geometry></collision>
+        <visual name="vis">
+          <geometry><box><size>0.5 0.5 2.5</size></box></geometry>
+          <material><ambient>0.7 0.5 0.2 1</ambient><diffuse>0.7 0.5 0.2 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="pillar_b">
+      <static>true</static>
+      <pose>-3.5 -3.0 1.25 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><box><size>0.5 0.5 2.5</size></box></geometry></collision>
+        <visual name="vis">
+          <geometry><box><size>0.5 0.5 2.5</size></box></geometry>
+          <material><ambient>0.7 0.5 0.2 1</ambient><diffuse>0.7 0.5 0.2 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ============================================================
+         ZONE B (East, X ∈ [0, 8])
+         Pick table near wide door, Place table near narrow passage.
+    ============================================================ -->
+
+    <!-- Pick table: accessible via WIDE door (Y center ≈ 4.0) -->
+    <model name="pick_table">
+      <static>true</static>
+      <pose>5.0 4.0 0.4 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><box><size>1.2 0.8 0.8</size></box></geometry></collision>
+        <visual name="vis">
+          <geometry><box><size>1.2 0.8 0.8</size></box></geometry>
+          <material><ambient>0.2 0.6 0.3 1</ambient><diffuse>0.2 0.6 0.3 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Place table: accessible via NARROW passage (Y center ≈ -1.75) -->
+    <model name="place_table">
+      <static>true</static>
+      <pose>5.0 -4.0 0.4 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><box><size>1.2 0.8 0.8</size></box></geometry></collision>
+        <visual name="vis">
+          <geometry><box><size>1.2 0.8 0.8</size></box></geometry>
+          <material><ambient>0.7 0.2 0.2 1</ambient><diffuse>0.7 0.2 0.2 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Workpiece on pick table -->
+    <model name="workpiece">
+      <static>false</static>
+      <pose>5.0 4.0 0.88 0 0 0</pose>
+      <link name="link">
+        <inertial><mass>0.3</mass>
+          <inertia><ixx>0.0002</ixx><ixy>0</ixy><ixz>0</ixz>
+                   <iyy>0.0002</iyy><iyz>0</iyz><izz>0.0002</izz></inertia>
+        </inertial>
+        <collision name="col">
+          <geometry><cylinder><radius>0.05</radius><length>0.16</length></cylinder></geometry>
+        </collision>
+        <visual name="vis">
+          <geometry><cylinder><radius>0.05</radius><length>0.16</length></cylinder></geometry>
+          <material><ambient>1.0 0.8 0.0 1</ambient><diffuse>1.0 0.8 0.0 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+  </world>
+</sdf>

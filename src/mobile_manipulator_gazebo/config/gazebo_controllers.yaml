@@ -13,8 +13,8 @@ controller_manager:
 
 diff_drive_controller:
   ros__parameters:
-    left_wheel_names: ["left_wheel_joint"]
-    right_wheel_names: ["right_wheel_joint"]
+    left_wheel_names: ["right_wheel_joint"]
+    right_wheel_names: ["left_wheel_joint"]
 
     wheel_separation: 0.445208
     wheel_radius: 0.0625
@@ -33,8 +33,6 @@ diff_drive_controller:
     pose_covariance_diagonal: [0.001, 0.001, 1000000.0, 1000000.0, 1000000.0, 1000.0]
     twist_covariance_diagonal: [0.001, 0.001, 1000000.0, 1000000.0, 1000000.0, 1000.0]
 
-    # Command velocities input
-    use_stamped_vel: true
 
 joint_trajectory_controller:
   ros__parameters:
