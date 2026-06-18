@@ -1,7 +1,7 @@
 image: simple_maze.pgm
 mode: trinary
 resolution: 0.050
-origin: [0.401, -4.920, 0]
+origin: [-9.849, -8.633, 0]
 negate: 0
 occupied_thresh: 0.65
 free_thresh: 0.196
