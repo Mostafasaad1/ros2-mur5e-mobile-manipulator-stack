@@ -26,4 +26,60 @@
   <gazebo reference="ur5e_wrist_2_link"><self_collide>true</self_collide></gazebo>
   <gazebo reference="ur5e_wrist_3_link"><self_collide>true</self_collide></gazebo>
 
+  <!-- ros2_control configuration for Gazebo Harmonic -->
+  <ros2_control name="gz_ros2_control" type="system">
+    <hardware>
+      <plugin>gz_ros2_control/GazeboSimSystem</plugin>
+    </hardware>
+    <!-- MiR250 Base Wheels -->
+    <joint name="left_wheel_joint">
+      <command_interface name="velocity" />
+      <state_interface name="position" />
+      <state_interface name="velocity" />
+    </joint>
+    <joint name="right_wheel_joint">
+      <command_interface name="velocity" />
+      <state_interface name="position" />
+      <state_interface name="velocity" />
+    </joint>
+    <!-- UR5e Arm Joints -->
+    <joint name="ur5e_shoulder_pan_joint">
+      <command_interface name="position" />
+      <state_interface name="position" />
+      <state_interface name="velocity" />
+    </joint>
+    <joint name="ur5e_shoulder_lift_joint">
+      <command_interface name="position" />
+      <state_interface name="position" />
+      <state_interface name="velocity" />
+    </joint>
+    <joint name="ur5e_elbow_joint">
+      <command_interface name="position" />
+      <state_interface name="position" />
+      <state_interface name="velocity" />
+    </joint>
+    <joint name="ur5e_wrist_1_joint">
+      <command_interface name="position" />
+      <state_interface name="position" />
+      <state_interface name="velocity" />
+    </joint>
+    <joint name="ur5e_wrist_2_joint">
+      <command_interface name="position" />
+      <state_interface name="position" />
+      <state_interface name="velocity" />
+    </joint>
+    <joint name="ur5e_wrist_3_joint">
+      <command_interface name="position" />
+      <state_interface name="position" />
+      <state_interface name="velocity" />
+    </joint>
+  </ros2_control>
+
+  <!-- Gazebo ros2_control plugin -->
+  <gazebo>
+    <plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
+      <parameters>$(find mobile_manipulator_gazebo)/config/gazebo_controllers.yaml</parameters>
+    </plugin>
+  </gazebo>
+
 </robot>
