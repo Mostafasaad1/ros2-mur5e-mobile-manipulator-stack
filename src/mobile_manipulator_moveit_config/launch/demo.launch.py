@@ -64,7 +64,21 @@ def generate_launch_description():
             ),
             {'use_sim_time': LaunchConfiguration('use_sim_time', default='false')}
         ],
+        remappings=[
+            ('/joint_states', '/joint_states_controller')
+        ],
         output='screen',
+    )
+
+    # Joint State Publisher to merge joint states from controller and base joints
+    joint_state_publisher = Node(
+        package='joint_state_publisher',
+        executable='joint_state_publisher',
+        parameters=[
+            moveit_configs.robot_description,
+            {'source_list': ['/joint_states_controller']},
+            {'use_sim_time': LaunchConfiguration('use_sim_time', default='false')}
+        ],
     )
 
     # Spawn standard controllers (broadcaster and trajectory controller)
@@ -129,6 +143,7 @@ def generate_launch_description():
         static_tf,
         robot_state_publisher,
         ros2_control_node,
+        joint_state_publisher,
         spawn_controllers,
         move_group,
         rviz,
