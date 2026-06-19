@@ -10,64 +10,82 @@ from launch_ros.actions import Node
 
 
 def generate_launch_description():
-    # Package directories
-    try:
-        mobile_manipulator_nav_dir = get_package_share_directory('mobile_manipulator_nav')
-    except Exception:
-        mobile_manipulator_nav_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    nav_dir = get_package_share_directory('mobile_manipulator_nav')
 
     try:
-        mobile_manipulator_slam_dir = get_package_share_directory('mobile_manipulator_slam')
-        default_map_path = os.path.join(
-            mobile_manipulator_slam_dir,
-            'maps',
-            'nav_workspace.yaml'
-        )
+        slam_dir = get_package_share_directory('mobile_manipulator_slam')
+        default_map = os.path.join(slam_dir, 'maps', 'nav_workspace.yaml')
     except Exception:
-        default_map_path = ''
+        default_map = ''
 
-    try:
-        nav2_bringup_dir = get_package_share_directory('nav2_bringup')
-    except Exception:
-        nav2_bringup_dir = ''
-
-    # Launch configurations
     use_sim_time = LaunchConfiguration('use_sim_time', default='true')
-    headless = LaunchConfiguration('headless', default='false')
-    map_yaml_file = LaunchConfiguration('map', default=default_map_path)
+    use_rviz     = LaunchConfiguration('use_rviz',     default='true')
+    map_yaml     = LaunchConfiguration('map',          default=default_map)
+    params_file  = LaunchConfiguration(
+        'params_file',
+        default=os.path.join(nav_dir, 'config', 'nav2_params.yaml'))
 
-    # Path to our customized nav2 params
-    params_file_path = os.path.join(
-        mobile_manipulator_nav_dir,
-        'config',
-        'nav2_params.yaml'
-    )
-    params_file = LaunchConfiguration('params_file', default=params_file_path)
-
-    # 1. Include standard Nav2 bringup
-    nav2_bringup = IncludeLaunchDescription(
+    # ── 1. Our custom navigation launch (no collision_monitor) ──────────────
+    nav2_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            os.path.join(nav2_bringup_dir, 'launch', 'bringup_launch.py')
+            os.path.join(nav_dir, 'launch', 'nav2_no_collision_monitor.launch.py')
         ),
         launch_arguments={
             'use_sim_time': use_sim_time,
-            'map': map_yaml_file,
-            'params_file': params_file,
-            'autostart': 'true',
+            'params_file':  params_file,
+            'autostart':    'true',
         }.items(),
-        condition=IfCondition(PythonExpression(["'", nav2_bringup_dir, "' != ''"]))
     )
 
-    # 2. Arm State Monitor Node
-    arm_state_monitor = Node(
-        package='mobile_manipulator_nav',
-        executable='arm_state_monitor.py',
-        name='arm_state_monitor',
+    # ── 2. Map server (separate from nav2 bringup) ───────────────────────────
+    map_server = Node(
+        package='nav2_map_server',
+        executable='map_server',
+        name='map_server',
         output='screen',
-        parameters=[{'use_sim_time': use_sim_time}]
+        parameters=[
+            {'use_sim_time': use_sim_time},
+            {'yaml_filename': map_yaml},
+        ],
     )
 
-    # Sensor Bridge Node (bridges laser scan and IMU from Gazebo to ROS 2)
+    map_server_lc = Node(
+        package='nav2_lifecycle_manager',
+        executable='lifecycle_manager',
+        name='lifecycle_manager_map',
+        output='screen',
+        parameters=[
+            {'use_sim_time': use_sim_time},
+            {'autostart': True},
+            {'node_names': ['map_server']},
+        ],
+    )
+
+    # ── 3. AMCL ──────────────────────────────────────────────────────────────
+    amcl = Node(
+        package='nav2_amcl',
+        executable='amcl',
+        name='amcl',
+        output='screen',
+        parameters=[
+            params_file,
+            {'use_sim_time': use_sim_time},
+        ],
+    )
+
+    amcl_lc = Node(
+        package='nav2_lifecycle_manager',
+        executable='lifecycle_manager',
+        name='lifecycle_manager_localization',
+        output='screen',
+        parameters=[
+            {'use_sim_time': use_sim_time},
+            {'autostart': True},
+            {'node_names': ['amcl']},
+        ],
+    )
+
+    # ── 4. Sensor bridge (Gazebo → ROS 2) ────────────────────────────────────
     sensor_bridge = Node(
         package='ros_gz_bridge',
         executable='parameter_bridge',
@@ -77,45 +95,47 @@ def generate_launch_description():
             '/scan@sensor_msgs/msg/LaserScan[gz.msgs.LaserScan',
             '/imu@sensor_msgs/msg/Imu[gz.msgs.IMU',
         ],
-        parameters=[{'use_sim_time': use_sim_time}]
+        parameters=[{'use_sim_time': use_sim_time}],
     )
 
-    # 3. RViz2 display node
-    rviz_config_file = os.path.join(
-        mobile_manipulator_nav_dir,
-        'rviz',
-        'nav2_default_view.rviz'
+    # ── 5. Arm state monitor ──────────────────────────────────────────────────
+    arm_state_monitor = Node(
+        package='mobile_manipulator_nav',
+        executable='arm_state_monitor.py',
+        name='arm_state_monitor',
+        output='screen',
+        parameters=[{'use_sim_time': use_sim_time}],
     )
+
+    # ── 6. RViz2 ─────────────────────────────────────────────────────────────
+    rviz_cfg = os.path.join(nav_dir, 'rviz', 'nav2_default_view.rviz')
     rviz_node = Node(
         package='rviz2',
         executable='rviz2',
         name='rviz2',
         output='screen',
-        arguments=['-d', rviz_config_file],
+        arguments=['-d', rviz_cfg],
         parameters=[{'use_sim_time': use_sim_time}],
-        condition=IfCondition(PythonExpression(["'", headless, "' != 'true'"]))
+        condition=IfCondition(use_rviz),
     )
 
     return LaunchDescription([
-        DeclareLaunchArgument(
-            'use_sim_time', default_value='true',
-            description='Use simulation clock'
-        ),
-        DeclareLaunchArgument(
-            'headless', default_value='false',
-            description='Run Gazebo in headless mode'
-        ),
-        DeclareLaunchArgument(
-            'map', default_value=default_map_path,
-            description='Full path to map yaml file to load'
-        ),
-        DeclareLaunchArgument(
-            'params_file', default_value=params_file_path,
-            description='Full path to the ROS 2 parameters file to use for all launched nodes'
-        ),
+        DeclareLaunchArgument('use_sim_time', default_value='true',
+                              description='Use simulation clock'),
+        DeclareLaunchArgument('use_rviz',    default_value='true',
+                              description='Launch RViz2'),
+        DeclareLaunchArgument('map',         default_value=default_map,
+                              description='Path to map yaml'),
+        DeclareLaunchArgument('params_file', default_value=os.path.join(
+                              nav_dir, 'config', 'nav2_params.yaml'),
+                              description='Nav2 params file'),
 
-        nav2_bringup,
         sensor_bridge,
+        map_server,
+        map_server_lc,
+        amcl,
+        amcl_lc,
+        nav2_launch,
         arm_state_monitor,
         rviz_node,
     ])

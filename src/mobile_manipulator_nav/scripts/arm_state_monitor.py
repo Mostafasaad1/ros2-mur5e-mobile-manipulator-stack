@@ -25,26 +25,32 @@ class ArmStateMonitor(Node):
             'ur5e_wrist_2_joint': 0.0,
             'ur5e_wrist_3_joint': 0.0
         }
+        self.current_positions = {}
         self.threshold = 0.05  # radians
         self.get_logger().info('Arm State Monitor started. Monitoring UR5e joint states...')
 
     def joint_state_callback(self, msg):
+        # Update our cached positions with the joints in this message
+        for i, name in enumerate(msg.name):
+            if name in self.stowed_config:
+                self.current_positions[name] = msg.position[i]
+
+        # If we have not received positions for all 6 arm joints, default to ACTIVE
+        if len(self.current_positions) < len(self.stowed_config):
+            state_msg = String()
+            state_msg.data = 'ACTIVE'
+            self.pub.publish(state_msg)
+            return
+
         is_stowed = True
-        found_joints = 0
         for name, target_pos in self.stowed_config.items():
-            if name in msg.name:
-                idx = msg.name.index(name)
-                current_pos = msg.position[idx]
-                if abs(current_pos - target_pos) > self.threshold:
-                    is_stowed = False
-                found_joints += 1
+            current_pos = self.current_positions.get(name, 0.0)
+            if abs(current_pos - target_pos) > self.threshold:
+                is_stowed = False
+                break
 
         state_msg = String()
-        if found_joints == len(self.stowed_config):
-            state_msg.data = 'STOWED' if is_stowed else 'ACTIVE'
-        else:
-            state_msg.data = 'ACTIVE'
-
+        state_msg.data = 'STOWED' if is_stowed else 'ACTIVE'
         self.pub.publish(state_msg)
 
 

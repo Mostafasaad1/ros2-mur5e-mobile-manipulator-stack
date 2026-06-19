@@ -40,7 +40,7 @@ Visualization Manager:
       Plane Cell Count: 10
       Reference Frame: <Fixed Frame>
       Value: true
-    - Alpha: 0.6
+    - Alpha: 0.6000000238418579
       Class: rviz_default_plugins/RobotModel
       Collision Enabled: false
       Description File: ""
@@ -58,6 +58,164 @@ Visualization Manager:
         Expand Link Details: false
         Expand Tree: false
         Link Tree Style: Links in Alphabetic Order
+        base_footprint:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        base_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        bl_caster_rotation_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        bl_caster_wheel_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        br_caster_rotation_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        br_caster_wheel_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        camera_depth_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        camera_depth_optical_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        camera_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        fl_caster_rotation_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        fl_caster_wheel_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        fr_caster_rotation_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        fr_caster_wheel_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        front_laser_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        imu_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        left_wheel_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        right_wheel_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        safety_collision_volume:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        surface:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        ur5e_base:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        ur5e_base_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        ur5e_base_link_inertia:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        ur5e_flange:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        ur5e_forearm_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        ur5e_ft_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        ur5e_mount_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        ur5e_shoulder_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        ur5e_tool0:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        ur5e_upper_arm_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        ur5e_wrist_1_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        ur5e_wrist_2_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        ur5e_wrist_3_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        us_1_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        us_2_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
       Mass Properties:
         Inertia: false
         Mass: false
@@ -66,7 +224,7 @@ Visualization Manager:
       Update Interval: 0
       Value: true
       Visual Enabled: true
-    - Alpha: 0.7
+    - Alpha: 0.699999988079071
       Binary representation: false
       Binary threshold: 100
       Class: rviz_default_plugins/Map
@@ -111,7 +269,7 @@ Visualization Manager:
       Position Transformer: XYZ
       Selectable: true
       Size (Pixels): 3
-      Size (m): 0.05
+      Size (m): 0.05000000074505806
       Style: Points
       Topic:
         Depth: 5
@@ -124,6 +282,8 @@ Visualization Manager:
       Use rainbow: true
       Value: true
     - Alpha: 0.5
+      Binary representation: false
+      Binary threshold: 100
       Class: rviz_default_plugins/Map
       Color Scheme: costmap
       Draw Behind: false
@@ -132,6 +292,7 @@ Visualization Manager:
       Topic:
         Depth: 1
         Durability Policy: Transient Local
+        Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /global_costmap/costmap
@@ -143,7 +304,9 @@ Visualization Manager:
         Value: /global_costmap/costmap_updates
       Use Timestamp: false
       Value: true
-    - Alpha: 0.6
+    - Alpha: 0.6000000238418579
+      Binary representation: false
+      Binary threshold: 100
       Class: rviz_default_plugins/Map
       Color Scheme: costmap
       Draw Behind: false
@@ -152,6 +315,7 @@ Visualization Manager:
       Topic:
         Depth: 1
         Durability Policy: Transient Local
+        Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /local_costmap/costmap
@@ -163,13 +327,30 @@ Visualization Manager:
         Value: /local_costmap/costmap_updates
       Use Timestamp: false
       Value: true
-    - Class: rviz_default_plugins/Path
+    - Alpha: 1
+      Buffer Length: 1
+      Class: rviz_default_plugins/Path
       Color: 0; 255; 255
       Enabled: true
+      Head Diameter: 0.30000001192092896
+      Head Length: 0.20000000298023224
+      Length: 0.30000001192092896
+      Line Style: Lines
+      Line Width: 0.029999999329447746
       Name: Plan
+      Offset:
+        X: 0
+        Y: 0
+        Z: 0
+      Pose Color: 255; 85; 255
+      Pose Style: None
+      Radius: 0.029999999329447746
+      Shaft Diameter: 0.10000000149011612
+      Shaft Length: 0.10000000149011612
       Topic:
         Depth: 5
         Durability Policy: Volatile
+        Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /plan
@@ -204,6 +385,13 @@ Visualization Manager:
     - Class: rviz_default_plugins/FocusCamera
     - Class: rviz_default_plugins/GoalPose
       Topic: /goal_pose
+    - Class: rviz_default_plugins/SetGoal
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: goal_pose
   Transformation:
     Current:
       Class: rviz_default_plugins/TF
@@ -213,7 +401,7 @@ Visualization Manager:
       Class: rviz_default_plugins/Orbit
       Distance: 16.318035125732422
       Enable Stereo Rendering:
-        Stereo Eye Separation: 0.06
+        Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
@@ -222,14 +410,14 @@ Visualization Manager:
         Y: 0
         Z: 0
       Focal Shape Fixed Size: true
-      Focal Shape Size: 0.05
+      Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
-      Near Clip Distance: 0.01
-      Pitch: 0.78
+      Near Clip Distance: 0.009999999776482582
+      Pitch: 0.7799999713897705
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz_default_plugins)
-      Yaw: 0.78
+      Yaw: 0.7799999713897705
     Saved: ~
 Window Geometry:
   Displays:

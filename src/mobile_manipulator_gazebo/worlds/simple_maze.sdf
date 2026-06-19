@@ -187,7 +187,7 @@
     <!-- Wall 1 -->
     <model name="inner_wall_1">
       <static>true</static>
-      <pose>-2.0 2.5 1.0 0 0 0</pose>
+      <pose>-2.0 3.5 1.0 0 0 0</pose>
       <link name="link">
         <collision name="collision">
           <geometry>
@@ -214,7 +214,7 @@
     <!-- Wall 2 -->
     <model name="inner_wall_2">
       <static>true</static>
-      <pose>2.0 -2.5 1.0 0 0 0</pose>
+      <pose>2.0 -3.5 1.0 0 0 0</pose>
       <link name="link">
         <collision name="collision">
           <geometry>
@@ -246,14 +246,14 @@
         <collision name="collision">
           <geometry>
             <box>
-              <size>0.2 3.0 2.0</size>
+              <size>0.2 2.0 2.0</size>
             </box>
           </geometry>
         </collision>
         <visual name="visual">
           <geometry>
             <box>
-              <size>0.2 3.0 2.0</size>
+              <size>0.2 2.0 2.0</size>
             </box>
           </geometry>
           <material>

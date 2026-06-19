@@ -30,7 +30,7 @@ def generate_launch_description():
 
     # Launch configurations
     use_sim_time = LaunchConfiguration('use_sim_time', default='true')
-    x_pose = LaunchConfiguration('x_pose', default='-6.0')
+    x_pose = LaunchConfiguration('x_pose', default='-4.0')
     y_pose = LaunchConfiguration('y_pose', default='0.0')
     z_pose = LaunchConfiguration('z_pose', default='0.15')
 
@@ -105,9 +105,9 @@ def generate_launch_description():
         arguments=[
             '-name', 'mobile_manipulator',
             '-topic', '/robot_description',
-            '-x', x_pose,
-            '-y', y_pose,
-            '-z', z_pose,
+            ['-x=', x_pose],
+            ['-y=', y_pose],
+            ['-z=', z_pose],
         ]
     )
 
@@ -128,19 +128,35 @@ def generate_launch_description():
         output='screen',
     )
 
-    # Bridge cmd_vel, odom, and tf from Gazebo to ROS 2 for the native DiffDrive plugin
-    base_bridge = Node(
+    # cmd_vel bridge: ROS 2 /cmd_vel  --->  Gazebo /cmd_vel_gz
+    # ']' means ROS→Gazebo (we PUBLISH from ROS into Gazebo)
+    cmd_vel_bridge = Node(
         package='ros_gz_bridge',
         executable='parameter_bridge',
-        name='base_bridge',
+        name='cmd_vel_bridge',
         output='screen',
         arguments=[
             '/cmd_vel_gz@geometry_msgs/msg/Twist]gz.msgs.Twist',
-            '/odom_gz@nav_msgs/msg/Odometry[gz.msgs.Odometry',
-            '/tf_gz@tf2_msgs/msg/TFMessage[gz.msgs.Pose_V',
         ],
         remappings=[
             ('/cmd_vel_gz', '/cmd_vel'),
+        ],
+        parameters=[{'use_sim_time': use_sim_time}]
+    )
+
+    # odom + tf bridge: Gazebo  --->  ROS 2
+    # '[' on GZ side means Gazebo→ROS (we RECEIVE from Gazebo)
+    odom_tf_bridge = Node(
+        package='ros_gz_bridge',
+        executable='parameter_bridge',
+        name='odom_tf_bridge',
+        output='screen',
+        arguments=[
+            '/odom_gz@nav_msgs/msg/Odometry[gz.msgs.Odometry',
+            '/tf_gz@tf2_msgs/msg/TFMessage[gz.msgs.Pose_V',
+            '/joint_states@sensor_msgs/msg/JointState[gz.msgs.Model',
+        ],
+        remappings=[
             ('/odom_gz', '/odom'),
             ('/tf_gz', '/tf'),
         ],
@@ -185,7 +201,7 @@ def generate_launch_description():
             description='Run Gazebo in headless mode'
         ),
         DeclareLaunchArgument(
-            'x_pose', default_value='-6.0',
+            'x_pose', default_value='-4.0',
             description='Spawn x position'
         ),
         DeclareLaunchArgument(
@@ -202,7 +218,8 @@ def generate_launch_description():
         robot_state_publisher,
         spawn_entity,
         clock_bridge,
-        base_bridge,
+        cmd_vel_bridge,
+        odom_tf_bridge,
         load_joint_state_broadcaster,
         load_joint_trajectory_controller,
     ])

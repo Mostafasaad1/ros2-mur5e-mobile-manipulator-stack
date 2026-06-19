@@ -128,7 +128,7 @@
     <material>Gazebo/FlatBlack</material>
   </gazebo>
   <!-- caster hub -->
-  <joint name="fl_caster_rotation_joint" type="fixed">
+  <joint name="fl_caster_rotation_joint" type="continuous">
     <origin rpy="0 0 0" xyz="0.34134600000000004 0.203 0.1565"/>
     <parent link="base_link"/>
     <child link="fl_caster_rotation_link"/>
@@ -187,9 +187,11 @@
   </link>
   <gazebo reference="fl_caster_wheel_link">
     <material>Gazebo/FlatBlack</material>
+    <mu1>0.01</mu1>
+    <mu2>0.01</mu2>
   </gazebo>
   <!-- caster hub -->
-  <joint name="fr_caster_rotation_joint" type="fixed">
+  <joint name="fr_caster_rotation_joint" type="continuous">
     <origin rpy="0 0 0" xyz="0.34134600000000004 -0.203 0.1565"/>
     <parent link="base_link"/>
     <child link="fr_caster_rotation_link"/>
@@ -248,9 +250,11 @@
   </link>
   <gazebo reference="fr_caster_wheel_link">
     <material>Gazebo/FlatBlack</material>
+    <mu1>0.01</mu1>
+    <mu2>0.01</mu2>
   </gazebo>
   <!-- caster hub -->
-  <joint name="bl_caster_rotation_joint" type="fixed">
+  <joint name="bl_caster_rotation_joint" type="continuous">
     <origin rpy="0 0 0" xyz="-0.270154 0.203 0.1565"/>
     <parent link="base_link"/>
     <child link="bl_caster_rotation_link"/>
@@ -309,9 +313,11 @@
   </link>
   <gazebo reference="bl_caster_wheel_link">
     <material>Gazebo/FlatBlack</material>
+    <mu1>0.01</mu1>
+    <mu2>0.01</mu2>
   </gazebo>
   <!-- caster hub -->
-  <joint name="br_caster_rotation_joint" type="fixed">
+  <joint name="br_caster_rotation_joint" type="continuous">
     <origin rpy="0 0 0" xyz="-0.270154 -0.203 0.1565"/>
     <parent link="base_link"/>
     <child link="br_caster_rotation_link"/>
@@ -370,6 +376,8 @@
   </link>
   <gazebo reference="br_caster_wheel_link">
     <material>Gazebo/FlatBlack</material>
+    <mu1>0.01</mu1>
+    <mu2>0.01</mu2>
   </gazebo>
   <joint name="base_link_surface_joint" type="fixed">
     <origin rpy="0 0 0" xyz="0.037646 0 0.352"/>
@@ -378,51 +386,32 @@
     <axis xyz="0 0 1"/>
   </joint>
   <link name="surface"/>
-  <transmission name="left_wheel_trans">
-    <type>transmission_interface/SimpleTransmission</type>
-    <joint name="left_wheel_joint">
-      <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
-    </joint>
-    <actuator name="left_wheel_motor">
-      <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
-      <mechanicalReduction>1</mechanicalReduction>
-    </actuator>
-  </transmission>
-  <transmission name="right_wheel_trans">
-    <type>transmission_interface/SimpleTransmission</type>
-    <joint name="right_wheel_joint">
-      <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
-    </joint>
-    <actuator name="right_wheel_motor">
-      <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
-      <mechanicalReduction>1</mechanicalReduction>
-    </actuator>
-  </transmission>
+
   <gazebo reference="left_wheel_link">
-    <mu1>1.0</mu1>
-    <mu2>1.0</mu2>
+    <mu1>200.0</mu1>
+    <mu2>200.0</mu2>
     <fdir1>1 0 0</fdir1>
   </gazebo>
   <gazebo reference="right_wheel_link">
-    <mu1>1.0</mu1>
-    <mu2>1.0</mu2>
+    <mu1>200.0</mu1>
+    <mu2>200.0</mu2>
     <fdir1>1 0 0</fdir1>
   </gazebo>
   <gazebo reference="fl_caster_wheel_link">
-    <mu1>0.001</mu1>
-    <mu2>0.001</mu2>
+    <mu1>0.0</mu1>
+    <mu2>0.0</mu2>
   </gazebo>
   <gazebo reference="fr_caster_wheel_link">
-    <mu1>0.001</mu1>
-    <mu2>0.001</mu2>
+    <mu1>0.0</mu1>
+    <mu2>0.0</mu2>
   </gazebo>
   <gazebo reference="bl_caster_wheel_link">
-    <mu1>0.001</mu1>
-    <mu2>0.001</mu2>
+    <mu1>0.0</mu1>
+    <mu2>0.0</mu2>
   </gazebo>
   <gazebo reference="br_caster_wheel_link">
-    <mu1>0.001</mu1>
-    <mu2>0.001</mu2>
+    <mu1>0.0</mu1>
+    <mu2>0.0</mu2>
   </gazebo>
 
 
