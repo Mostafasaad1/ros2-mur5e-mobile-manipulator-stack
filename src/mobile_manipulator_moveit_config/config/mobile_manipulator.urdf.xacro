@@ -1,0 +1,68 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://wiki.ros.org/xacro" name="mobile_manipulator">
+
+  <!-- Include base description URDF/Xacro -->
+  <xacro:include filename="$(find mobile_manipulator_description)/urdf/mobile_manipulator.urdf.xacro" />
+
+  <!-- ros2_control hardware type: "mock" or "gz" -->
+  <xacro:arg name="ros2_control_hardware_type" default="mock" />
+
+  <!-- ros2_control configuration for UR5e arm -->
+  <ros2_control name="mobile_manipulator_ros2_control" type="system">
+    <hardware>
+      <xacro:if value="${'$(arg ros2_control_hardware_type)' == 'mock'}">
+        <plugin>mock_components/GenericSystem</plugin>
+        <param name="mock_sensor_commands">false</param>
+        <param name="state_following_offset">0.0</param>
+        <param name="calculate_dynamics">true</param>
+      </xacro:if>
+      <xacro:if value="${'$(arg ros2_control_hardware_type)' == 'gz'}">
+        <plugin>gz_ros2_control/GazeboSimSystem</plugin>
+      </xacro:if>
+    </hardware>
+
+    <!-- UR5e Arm Joints -->
+    <joint name="ur5e_shoulder_pan_joint">
+      <command_interface name="position" />
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity" />
+    </joint>
+    <joint name="ur5e_shoulder_lift_joint">
+      <command_interface name="position" />
+      <state_interface name="position">
+        <param name="initial_value">-1.5708</param>
+      </state_interface>
+      <state_interface name="velocity" />
+    </joint>
+    <joint name="ur5e_elbow_joint">
+      <command_interface name="position" />
+      <state_interface name="position">
+        <param name="initial_value">1.5708</param>
+      </state_interface>
+      <state_interface name="velocity" />
+    </joint>
+    <joint name="ur5e_wrist_1_joint">
+      <command_interface name="position" />
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity" />
+    </joint>
+    <joint name="ur5e_wrist_2_joint">
+      <command_interface name="position" />
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity" />
+    </joint>
+    <joint name="ur5e_wrist_3_joint">
+      <command_interface name="position" />
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity" />
+    </joint>
+  </ros2_control>
+</robot>
