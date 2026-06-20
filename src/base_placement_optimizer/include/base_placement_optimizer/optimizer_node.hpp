@@ -1,5 +1,23 @@
+// Copyright 2026 Mobile Manipulator Project
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 #ifndef BASE_PLACEMENT_OPTIMIZER__OPTIMIZER_NODE_HPP_
 #define BASE_PLACEMENT_OPTIMIZER__OPTIMIZER_NODE_HPP_
+
+#include <memory>
+#include <mutex>
+#include <string>
 
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_action/rclcpp_action.hpp"
@@ -8,12 +26,9 @@
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "tf2_ros/buffer.h"
 #include "tf2_ros/transform_listener.h"
-#include "moveit/robot_model_loader/robot_model_loader.h"
-#include "moveit/robot_model/robot_model.h"
-#include "moveit/robot_state/robot_state.h"
-
-#include <memory>
-#include <mutex>
+#include "moveit/robot_model_loader/robot_model_loader.hpp"
+#include "moveit/robot_model/robot_model.hpp"
+#include "moveit/robot_state/robot_state.hpp"
 
 namespace base_placement_optimizer
 {

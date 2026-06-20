@@ -1,9 +1,28 @@
+// Copyright 2026 Mobile Manipulator Project
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+#include <cmath>
+#include <functional>
+#include <memory>
+#include <mutex>
+#include <string>
+#include <thread>
+#include <vector>
+
 #include "base_placement_optimizer/optimizer_node.hpp"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 #include "tf2_eigen/tf2_eigen.hpp"
-#include <thread>
-#include <functional>
-#include <cmath>
 
 namespace base_placement_optimizer
 {
@@ -43,12 +62,13 @@ BasePlacementOptimizerNode::BasePlacementOptimizerNode(const rclcpp::NodeOptions
     RCLCPP_INFO(this->get_logger(), "Successfully loaded RobotModel.");
   }
 
+  using namespace std::placeholders;
+
   // Costmap subscriber
   costmap_sub_ = this->create_subscription<nav_msgs::msg::OccupancyGrid>(
     costmap_topic_, rclcpp::QoS(1).reliable().transient_local(),
     std::bind(&BasePlacementOptimizerNode::costmap_callback, this, _1));
 
-  using namespace std::placeholders;
   action_server_ = rclcpp_action::create_server<OptimizePlacement>(
     this,
     "optimize_placement",
@@ -256,8 +276,9 @@ bool BasePlacementOptimizerNode::is_candidate_safe(
   }
 
   // Convert world coordinates to map cell indices
-  double origin_x = costmap->info.origin.pose.position.x;
-  double origin_y = costmap->info.origin.pose.position.y;
+  // MapMetaData.origin is geometry_msgs::Pose (not PoseStamped)
+  double origin_x = costmap->info.origin.position.x;
+  double origin_y = costmap->info.origin.position.y;
   double resolution = costmap->info.resolution;
 
   int cell_x = static_cast<int>((x - origin_x) / resolution);
@@ -271,10 +292,12 @@ bool BasePlacementOptimizerNode::is_candidate_safe(
   }
 
   int index = cell_y * costmap->info.width + cell_x;
-  int8_t cost = costmap->data[index];
+  // OccupancyGrid data is int8_t, but Nav2 uses uint8_t-range values (0-254)
+  // Cast to uint8_t to correctly compare LETHAL (254) and INSCRIBED (253)
+  uint8_t cost = static_cast<uint8_t>(costmap->data[index]);
 
-  // 254 is LETHAL, 253 is INSCRIBED_INFLATED
-  if (cost == 254 || cost == 253) {
+  // 254 is LETHAL_OBSTACLE, 253 is INSCRIBED_INFLATED_OBSTACLE
+  if (cost >= 253) {
     return false;
   }
 

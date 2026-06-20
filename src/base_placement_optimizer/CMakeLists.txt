@@ -57,6 +57,10 @@ install(DIRECTORY include/
 install(DIRECTORY launch
   DESTINATION share/${PROJECT_NAME}/)
 
+install(PROGRAMS scripts/run_task.py
+  DESTINATION lib/${PROJECT_NAME})
+
+
 if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
   find_package(ament_lint_auto REQUIRED)
@@ -78,7 +82,7 @@ if(BUILD_TESTING)
     tf2_ros
     tf2_eigen)
   target_link_libraries(test_optimizer optimizer_node)
-  
+
   # For action interfaces
   rosidl_get_typesupport_target(cpp_typesupport_target "${PROJECT_NAME}" "rosidl_typesupport_cpp")
   target_link_libraries(test_optimizer "${cpp_typesupport_target}")
