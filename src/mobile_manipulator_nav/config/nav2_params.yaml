@@ -87,7 +87,11 @@ controller_server:
       stateful: True
       plugin: "nav2_controller::SimpleGoalChecker"
       xy_goal_tolerance: 0.05
-      yaw_goal_tolerance: 0.087
+      # Widened from 0.087 (5°) to 0.15 (8.6°).
+      # Root cause of oscillation: rotate_to_heading fires at 8.7° error, then spins
+      # at 0.5 rad/s straight through the 5° tolerance zone in 3.5 steps with zero
+      # deceleration → guaranteed overshoot → bang-bang oscillation at goal.
+      yaw_goal_tolerance: 0.15
     FollowPath:
       plugin: "nav2_regulated_pure_pursuit_controller::RegulatedPurePursuitController"
       desired_linear_vel: 0.26
@@ -95,7 +99,10 @@ controller_server:
       min_lookahead_dist: 0.2
       max_lookahead_dist: 0.6
       lookahead_time: 1.5
-      rotate_to_heading_angular_vel: 0.5
+      # Reduced from 0.5 to 0.15 rad/s.
+      # At 20 Hz, 0.15 rad/s → 0.0075 rad/step, giving ~20 steps to settle into the
+      # yaw_goal_tolerance zone — well within the deceleration window.
+      rotate_to_heading_angular_vel: 0.15
       transform_tolerance: 0.5
       use_velocity_scaled_lookahead_dist: false
       min_approach_linear_velocity: 0.05
@@ -109,7 +116,9 @@ controller_server:
       use_rotate_to_heading: true
       allow_reversing: false
       rotate_to_heading_min_angle: 0.152
-      max_angular_accel: 2.0
+      # Reduced from 2.0 to 1.0 rad/s². Prevents velocity build-up during the
+      # rotate-to-heading phase from carrying overshoot momentum past the goal.
+      max_angular_accel: 1.0
       max_robot_pose_search_dist: 10.0
 
 planner_server:
@@ -221,10 +230,13 @@ velocity_smoother:
     use_sim_time: True
     enable_stamped_cmd_vel: false
     feedback: "OPEN_LOOP"
-    max_velocity: [0.26, 0.0, 1.0]
-    min_velocity: [-0.26, 0.0, -1.0]
-    max_accel: [1.0, 0.0, 2.0]
-    max_decel: [-1.0, 0.0, -2.0]
+    max_velocity: [0.26, 0.0, 0.5]
+    min_velocity: [-0.26, 0.0, -0.5]
+    # Angular accel reduced from 2.0 to 1.0 to match controller max_angular_accel.
+    # Caps the angular velocity the smoother can forward to cmd_vel, preventing
+    # the smoother from masking the controller's reduced angular commands.
+    max_accel: [1.0, 0.0, 1.0]
+    max_decel: [-1.0, 0.0, -1.0]
     odom_topic: "odom"
     odom_duration: 0.1
     deadband_velocity: [0.0, 0.0, 0.0]
