@@ -87,11 +87,12 @@ controller_server:
       stateful: True
       plugin: "nav2_controller::SimpleGoalChecker"
       xy_goal_tolerance: 0.05
-      # Widened from 0.087 (5°) to 0.15 (8.6°).
-      # Root cause of oscillation: rotate_to_heading fires at 8.7° error, then spins
-      # at 0.5 rad/s straight through the 5° tolerance zone in 3.5 steps with zero
-      # deceleration → guaranteed overshoot → bang-bang oscillation at goal.
-      yaw_goal_tolerance: 0.15
+      # Set to full-circle (6.28 rad) so Nav2 declares success on XY alone.
+      # The optimizer encodes a heading ~202° while the robot starts at 0° —
+      # that is a 197° in-place rotation Nav2 would spin through repeatedly.
+      # Heading alignment is handled by run_task.py with a P-controller after
+      # navigation completes, giving smooth, overshoot-free convergence.
+      yaw_goal_tolerance: 6.28
     FollowPath:
       plugin: "nav2_regulated_pure_pursuit_controller::RegulatedPurePursuitController"
       desired_linear_vel: 0.26
