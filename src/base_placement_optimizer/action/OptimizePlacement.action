@@ -1,0 +1,13 @@
+# Goal
+geometry_msgs/PoseStamped target_pose
+---
+# Result
+bool success
+string error_reason
+geometry_msgs/PoseStamped base_pose
+float32 manipulability_score
+float32 path_distance
+float32 composite_score
+---
+# Feedback
+string current_phase
