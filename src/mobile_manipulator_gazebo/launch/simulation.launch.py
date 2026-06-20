@@ -163,6 +163,18 @@ def generate_launch_description():
         parameters=[{'use_sim_time': use_sim_time}]
     )
 
+    # camera points bridge: Gazebo ---> ROS 2
+    camera_points_bridge = Node(
+        package='ros_gz_bridge',
+        executable='parameter_bridge',
+        name='camera_points_bridge',
+        output='screen',
+        arguments=[
+            '/camera/points@sensor_msgs/msg/PointCloud2[gz.msgs.PointCloudPacked',
+        ],
+        parameters=[{'use_sim_time': use_sim_time}]
+    )
+
     joint_trajectory_controller_spawner = Node(
         package='controller_manager',
         executable='spawner',
@@ -230,6 +242,7 @@ def generate_launch_description():
         clock_bridge,
         cmd_vel_bridge,
         odom_tf_bridge,
+        camera_points_bridge,
         load_joint_state_broadcaster,
         load_joint_trajectory_controller,
     ])

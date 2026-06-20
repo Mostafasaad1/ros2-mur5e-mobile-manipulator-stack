@@ -29,6 +29,7 @@
 #include "moveit/robot_model_loader/robot_model_loader.hpp"
 #include "moveit/robot_model/robot_model.hpp"
 #include "moveit/robot_state/robot_state.hpp"
+#include "moveit/planning_scene_monitor/planning_scene_monitor.hpp"
 
 namespace base_placement_optimizer
 {
@@ -62,8 +63,8 @@ private:
   std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
 
   // MoveIt components
-  std::shared_ptr<robot_model_loader::RobotModelLoader> robot_model_loader_;
-  moveit::core::RobotModelPtr robot_model_;
+  std::shared_ptr<planning_scene_monitor::PlanningSceneMonitor> planning_scene_monitor_;
+  moveit::core::RobotModelConstPtr robot_model_;
 
   // Costmap components
   rclcpp::Subscription<nav_msgs::msg::OccupancyGrid>::SharedPtr costmap_sub_;

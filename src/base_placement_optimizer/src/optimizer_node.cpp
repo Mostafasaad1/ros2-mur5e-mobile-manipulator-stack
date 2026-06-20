@@ -52,14 +52,19 @@ BasePlacementOptimizerNode::BasePlacementOptimizerNode(const rclcpp::NodeOptions
 
   // Note: For a real component, robot_description is usually passed via parameters to this node,
   // but robot_model_loader can also fetch it if standard topics/parameters are set.
-  robot_model_loader_ = std::make_shared<robot_model_loader::RobotModelLoader>(node_for_loader,
-      "robot_description");
-  robot_model_ = robot_model_loader_->getModel();
+  planning_scene_monitor_ = std::make_shared<planning_scene_monitor::PlanningSceneMonitor>(
+      node_for_loader, "robot_description");
 
-  if (!robot_model_) {
-    RCLCPP_ERROR(this->get_logger(), "Failed to load RobotModel! IK validation will fail.");
+  if (planning_scene_monitor_->getPlanningScene()) {
+    planning_scene_monitor_->startSceneMonitor("/planning_scene");
+    planning_scene_monitor_->startWorldGeometryMonitor();
+    planning_scene_monitor_->startStateMonitor("/joint_states", "/attached_collision_object");
+    robot_model_ = planning_scene_monitor_->getRobotModel();
+    RCLCPP_INFO(this->get_logger(), "Successfully loaded PlanningSceneMonitor and RobotModel.");
   } else {
-    RCLCPP_INFO(this->get_logger(), "Successfully loaded RobotModel.");
+    RCLCPP_ERROR(this->get_logger(),
+        "Failed to load PlanningSceneMonitor! IK validation will fail.");
+    robot_model_ = nullptr;
   }
 
   using namespace std::placeholders;
@@ -217,7 +222,17 @@ void BasePlacementOptimizerNode::execute(
     Eigen::Isometry3d T_base_obj = T_map_base.inverse() * T_map_obj;
 
     // Run IK
-    bool ik_valid = robot_state.setFromIK(joint_model_group, T_base_obj, ik_timeout_);
+    auto planning_scene = planning_scene_monitor_->getPlanningScene();
+    moveit::core::GroupStateValidityCallbackFn collision_callback =
+      [planning_scene](moveit::core::RobotState * rs, const moveit::core::JointModelGroup * jmg,
+      const double * joint_group_variable_values) {
+        rs->setJointGroupPositions(jmg, joint_group_variable_values);
+        rs->update();
+        return !planning_scene->isStateColliding(*rs, jmg->getName());
+      };
+
+    bool ik_valid = robot_state.setFromIK(joint_model_group, T_base_obj, ik_timeout_,
+        collision_callback);
 
     if (ik_valid) {
       double manipulability = compute_manipulability(robot_state, joint_model_group);

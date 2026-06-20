@@ -49,6 +49,7 @@ def generate_launch_description():
                 'ros2_control_hardware_type': LaunchConfiguration('ros2_control_hardware_type')
             }
         )
+        .sensors_3d('config/sensors_3d.yaml')
         .to_moveit_configs()
     )
 
