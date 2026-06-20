@@ -6,6 +6,8 @@
     </group>
     <group name="hand">
         <link name="ur5e_tool0" />
+        <joint name="finger_left_joint" />
+        <joint name="finger_right_joint" />
     </group>
 
     <!-- Group States (Named Poses) -->
@@ -24,6 +26,18 @@
         <joint name="ur5e_wrist_1_joint" value="-1.5708" />
         <joint name="ur5e_wrist_2_joint" value="-1.5708" />
         <joint name="ur5e_wrist_3_joint" value="0.0" />
+    </group_state>
+    <group_state name="open" group="hand">
+        <joint name="finger_left_joint" value="0.04" />
+        <joint name="finger_right_joint" value="0.04" />
+    </group_state>
+    <group_state name="closed" group="hand">
+        <joint name="finger_left_joint" value="0.0" />
+        <joint name="finger_right_joint" value="0.0" />
+    </group_state>
+    <group_state name="pre_grasp" group="hand">
+        <joint name="finger_left_joint" value="0.035" />
+        <joint name="finger_right_joint" value="0.035" />
     </group_state>
 
     <!-- End Effector -->
@@ -59,4 +73,13 @@
     <disable_collisions link1="base_link" link2="ur5e_mount_link" reason="Never" />
     <disable_collisions link1="base_link" link2="ur5e_base_link" reason="Never" />
     <disable_collisions link1="base_link" link2="ur5e_base_link_inertia" reason="Never" />
+
+    <!-- Gripper Collision Exclusions -->
+    <disable_collisions link1="ur5e_tool0" link2="finger_left" reason="Adjacent" />
+    <disable_collisions link1="ur5e_tool0" link2="finger_right" reason="Adjacent" />
+    <disable_collisions link1="ur5e_flange" link2="finger_left" reason="Never" />
+    <disable_collisions link1="ur5e_flange" link2="finger_right" reason="Never" />
+    <disable_collisions link1="finger_left" link2="finger_right" reason="Default" />
+    <disable_collisions link1="ur5e_wrist_3_link" link2="finger_left" reason="Never" />
+    <disable_collisions link1="ur5e_wrist_3_link" link2="finger_right" reason="Never" />
 </robot>

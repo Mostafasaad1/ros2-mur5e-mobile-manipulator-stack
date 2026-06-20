@@ -17,14 +17,12 @@
       <joint_name>ur5e_wrist_1_joint</joint_name>
       <joint_name>ur5e_wrist_2_joint</joint_name>
       <joint_name>ur5e_wrist_3_joint</joint_name>
+      <joint_name>finger_left_joint</joint_name>
+      <joint_name>finger_right_joint</joint_name>
       <joint_name>fl_caster_rotation_joint</joint_name>
-      <joint_name>fl_caster_wheel_joint</joint_name>
       <joint_name>fr_caster_rotation_joint</joint_name>
-      <joint_name>fr_caster_wheel_joint</joint_name>
       <joint_name>bl_caster_rotation_joint</joint_name>
-      <joint_name>bl_caster_wheel_joint</joint_name>
       <joint_name>br_caster_rotation_joint</joint_name>
-      <joint_name>br_caster_wheel_joint</joint_name>
     </plugin>
   </gazebo>
 
@@ -105,6 +103,17 @@
       <state_interface name="velocity" />
     </joint>
     <joint name="ur5e_wrist_3_joint">
+      <command_interface name="position" />
+      <state_interface name="position" />
+      <state_interface name="velocity" />
+    </joint>
+    <!-- Gripper Joints -->
+    <joint name="finger_left_joint">
+      <command_interface name="position" />
+      <state_interface name="position" />
+      <state_interface name="velocity" />
+    </joint>
+    <joint name="finger_right_joint">
       <command_interface name="position" />
       <state_interface name="position" />
       <state_interface name="velocity" />

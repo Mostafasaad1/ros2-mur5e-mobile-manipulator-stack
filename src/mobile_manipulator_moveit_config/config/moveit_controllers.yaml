@@ -4,6 +4,7 @@ moveit_controller_manager: moveit_simple_controller_manager/MoveItSimpleControll
 moveit_simple_controller_manager:
   controller_names:
     - joint_trajectory_controller
+    - gripper_controller
 
   joint_trajectory_controller:
     action_ns: follow_joint_trajectory
@@ -17,9 +18,18 @@ moveit_simple_controller_manager:
       - ur5e_wrist_2_joint
       - ur5e_wrist_3_joint
 
+  gripper_controller:
+    action_ns: follow_joint_trajectory
+    type: FollowJointTrajectory
+    default: true
+    joints:
+      - finger_left_joint
+      - finger_right_joint
+
 # MoveIt fake controller manager configuration (for offline visualization/demo)
 controller_names:
   - fake_robot_arm_controller
+  - fake_gripper_controller
 
 fake_robot_arm_controller:
   type: Interpolating
@@ -30,3 +40,9 @@ fake_robot_arm_controller:
     - ur5e_wrist_1_joint
     - ur5e_wrist_2_joint
     - ur5e_wrist_3_joint
+
+fake_gripper_controller:
+  type: Interpolating
+  joints:
+    - finger_left_joint
+    - finger_right_joint

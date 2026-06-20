@@ -13,6 +13,7 @@ install(DIRECTORY
   launch
   worlds
   config
+  scripts
   DESTINATION share/${PROJECT_NAME}
 )
 

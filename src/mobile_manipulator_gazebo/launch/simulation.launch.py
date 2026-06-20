@@ -170,9 +170,16 @@ def generate_launch_description():
         output='screen',
     )
 
+    gripper_controller_spawner = Node(
+        package='controller_manager',
+        executable='spawner',
+        arguments=['gripper_controller'],
+        output='screen',
+    )
+
     # Sequence Spawners:
     # 1. Wait for spawn_entity to finish -> start joint_state_broadcaster
-    # 2. Wait for joint_state_broadcaster to finish -> start joint_trajectory
+    # 2. Wait for joint_state_broadcaster to finish -> start joint_trajectory & gripper
     load_joint_state_broadcaster = RegisterEventHandler(
         event_handler=OnProcessExit(
             target_action=spawn_entity,
@@ -183,7 +190,10 @@ def generate_launch_description():
     load_joint_trajectory_controller = RegisterEventHandler(
         event_handler=OnProcessExit(
             target_action=joint_state_broadcaster_spawner,
-            on_exit=[joint_trajectory_controller_spawner],
+            on_exit=[
+                joint_trajectory_controller_spawner,
+                gripper_controller_spawner,
+            ],
         )
     )
 

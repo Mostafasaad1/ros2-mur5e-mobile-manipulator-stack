@@ -9,6 +9,9 @@ controller_manager:
     joint_trajectory_controller:
       type: joint_trajectory_controller/JointTrajectoryController
 
+    gripper_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+
 joint_trajectory_controller:
   ros__parameters:
     joints:
@@ -18,6 +21,17 @@ joint_trajectory_controller:
       - ur5e_wrist_1_joint
       - ur5e_wrist_2_joint
       - ur5e_wrist_3_joint
+    command_interfaces:
+      - position
+    state_interfaces:
+      - position
+      - velocity
+
+gripper_controller:
+  ros__parameters:
+    joints:
+      - finger_left_joint
+      - finger_right_joint
     command_interfaces:
       - position
     state_interfaces:
