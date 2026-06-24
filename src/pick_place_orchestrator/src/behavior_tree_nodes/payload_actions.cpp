@@ -75,8 +75,9 @@ BT::NodeStatus AttachPayloadAction::tick()
   moveit_msgs::msg::AttachedCollisionObject attached_object;
   attached_object.link_name = attached_link;
   attached_object.object = collision_object;
-  // Touch links allow fingers to touch the object without triggering collision faults
-  attached_object.touch_links = {"finger_left", "finger_right", attached_link};
+  // Touch links allow fingers/wrist to touch the object without triggering collision faults
+  attached_object.touch_links = {"finger_left", "finger_right", attached_link, "ur5e_flange",
+    "ur5e_wrist_3_link"};
 
   // 3. Apply changes asynchronously to the PlanningScene
   if (!planning_scene_interface_.applyAttachedCollisionObject(attached_object)) {

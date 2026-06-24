@@ -21,10 +21,10 @@
     </group_state>
     <group_state name="stowed" group="robot_arm">
         <joint name="ur5e_shoulder_pan_joint" value="0.0" />
-        <joint name="ur5e_shoulder_lift_joint" value="-3.0" />
-        <joint name="ur5e_elbow_joint" value="3.0" />
-        <joint name="ur5e_wrist_1_joint" value="-1.5708" />
-        <joint name="ur5e_wrist_2_joint" value="-1.5708" />
+        <joint name="ur5e_shoulder_lift_joint" value="-1.5708" />
+        <joint name="ur5e_elbow_joint" value="1.5708" />
+        <joint name="ur5e_wrist_1_joint" value="0.0" />
+        <joint name="ur5e_wrist_2_joint" value="0.0" />
         <joint name="ur5e_wrist_3_joint" value="0.0" />
     </group_state>
     <group_state name="open" group="hand">
@@ -51,6 +51,13 @@
     <disable_collisions link1="ur5e_shoulder_link" link2="ur5e_upper_arm_link" reason="Adjacent" />
     <disable_collisions link1="ur5e_upper_arm_link" link2="ur5e_forearm_link" reason="Adjacent" />
     <disable_collisions link1="ur5e_forearm_link" link2="ur5e_wrist_1_link" reason="Adjacent" />
+    <disable_collisions link1="ur5e_upper_arm_link" link2="ur5e_wrist_1_link" reason="Never" />
+    <disable_collisions link1="ur5e_upper_arm_link" link2="ur5e_wrist_2_link" reason="Never" />
+    <disable_collisions link1="ur5e_upper_arm_link" link2="ur5e_wrist_3_link" reason="Never" />
+    <disable_collisions link1="ur5e_upper_arm_link" link2="ur5e_flange" reason="Never" />
+    <disable_collisions link1="ur5e_upper_arm_link" link2="ur5e_tool0" reason="Never" />
+    <disable_collisions link1="ur5e_upper_arm_link" link2="finger_left" reason="Never" />
+    <disable_collisions link1="ur5e_upper_arm_link" link2="finger_right" reason="Never" />
     <disable_collisions link1="ur5e_wrist_1_link" link2="ur5e_wrist_2_link" reason="Adjacent" />
     <disable_collisions link1="ur5e_wrist_2_link" link2="ur5e_wrist_3_link" reason="Adjacent" />
     <disable_collisions link1="ur5e_wrist_3_link" link2="ur5e_flange" reason="Adjacent" />
@@ -68,11 +75,27 @@
     <disable_collisions link1="safety_collision_volume" link2="ur5e_base_link" reason="Never" />
     <disable_collisions link1="safety_collision_volume" link2="ur5e_base_link_inertia" reason="Never" />
     <disable_collisions link1="safety_collision_volume" link2="ur5e_shoulder_link" reason="Never" />
+    <disable_collisions link1="safety_collision_volume" link2="bl_caster_wheel_link" reason="Never" />
+    <disable_collisions link1="safety_collision_volume" link2="bl_caster_rotation_link" reason="Never" />
+    <disable_collisions link1="safety_collision_volume" link2="br_caster_wheel_link" reason="Never" />
+    <disable_collisions link1="safety_collision_volume" link2="br_caster_rotation_link" reason="Never" />
+    <disable_collisions link1="safety_collision_volume" link2="fl_caster_wheel_link" reason="Never" />
+    <disable_collisions link1="safety_collision_volume" link2="fl_caster_rotation_link" reason="Never" />
+    <disable_collisions link1="safety_collision_volume" link2="fr_caster_wheel_link" reason="Never" />
+    <disable_collisions link1="safety_collision_volume" link2="fr_caster_rotation_link" reason="Never" />
+    <disable_collisions link1="safety_collision_volume" link2="left_wheel_link" reason="Never" />
+    <disable_collisions link1="safety_collision_volume" link2="right_wheel_link" reason="Never" />
+    <disable_collisions link1="safety_collision_volume" link2="front_laser_link" reason="Never" />
+    <disable_collisions link1="safety_collision_volume" link2="back_laser_link" reason="Never" />
+    <disable_collisions link1="safety_collision_volume" link2="imu_link" reason="Never" />
     <disable_collisions link1="base_link" link2="surface" reason="Adjacent" />
     <disable_collisions link1="base_link" link2="safety_collision_volume" reason="Never" />
     <disable_collisions link1="base_link" link2="ur5e_mount_link" reason="Never" />
     <disable_collisions link1="base_link" link2="ur5e_base_link" reason="Never" />
     <disable_collisions link1="base_link" link2="ur5e_base_link_inertia" reason="Never" />
+    <disable_collisions link1="ur5e_forearm_link" link2="ur5e_shoulder_link" reason="Never" />
+    <disable_collisions link1="ur5e_forearm_link" link2="ur5e_base_link" reason="Never" />
+    <disable_collisions link1="ur5e_forearm_link" link2="ur5e_base_link_inertia" reason="Never" />
 
     <!-- Gripper Collision Exclusions -->
     <disable_collisions link1="ur5e_tool0" link2="finger_left" reason="Adjacent" />
