@@ -1,0 +1,13 @@
+# Goal definition
+geometry_msgs/PoseStamped pick_pose
+geometry_msgs/PoseStamped place_pose
+---
+# Result definition
+bool success
+string failure_reason
+int32 failed_step_index
+---
+# Feedback definition
+string current_phase
+string current_step
+int32 step_index

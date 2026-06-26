@@ -1,0 +1,8 @@
+# Default initial positions for the robot's joints
+initial_positions:
+  ur5e_shoulder_pan_joint: 0.0
+  ur5e_shoulder_lift_joint: -1.5708
+  ur5e_elbow_joint: 1.5708
+  ur5e_wrist_1_joint: -1.5708
+  ur5e_wrist_2_joint: -1.5708
+  ur5e_wrist_3_joint: 0.0

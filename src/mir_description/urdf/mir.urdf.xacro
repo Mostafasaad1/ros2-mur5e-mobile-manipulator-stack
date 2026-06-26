@@ -26,12 +26,14 @@
         <color rgba="1 1 1 1"/>
       </material>
     </visual>
+    <!--
     <collision>
-      <origin rpy="0 0 0" xyz="0.037646 0 0"/>
+      <origin rpy="0 0 0" xyz="0.037646 0 0.18"/>
       <geometry>
-        <mesh filename="package://mir_description/meshes/collision/mir_100_base.stl"/>
+        <box size="0.95 0.65 0.25"/>
       </geometry>
     </collision>
+    -->
   </link>
   <gazebo reference="base_link">
     <material>Gazebo/White</material>
@@ -62,11 +64,11 @@
   </joint>
   <link name="us_2_frame"/>
   <joint name="left_wheel_joint" type="continuous">
-    <origin rpy="0 0 0" xyz="0.0 0.222604 0.0625"/>
+    <origin rpy="0 0 0" xyz="0.0 0.222604 0.061"/>
     <parent link="base_link"/>
     <child link="left_wheel_link"/>
     <axis xyz="0 1 0"/>
-    <limit effort="100" velocity="20.0"/>
+    <limit effort="10000" velocity="20.0"/>
   </joint>
   <link name="left_wheel_link">
     <inertial>
@@ -94,11 +96,11 @@
     <material>Gazebo/FlatBlack</material>
   </gazebo>
   <joint name="right_wheel_joint" type="continuous">
-    <origin rpy="0 0 0" xyz="0.0 -0.222604 0.0625"/>
+    <origin rpy="0 0 0" xyz="0.0 -0.222604 0.061"/>
     <parent link="base_link"/>
     <child link="right_wheel_link"/>
     <axis xyz="0 1 0"/>
-    <limit effort="100" velocity="20.0"/>
+    <limit effort="10000" velocity="20.0"/>
   </joint>
   <link name="right_wheel_link">
     <inertial>
@@ -149,18 +151,13 @@
         <color rgba="0.79 0.82 0.93 1"/>
       </material>
     </visual>
-    <collision>
-      <origin rpy="0 0 0" xyz="0 0 0"/>
-      <geometry>
-        <mesh filename="package://mir_description/meshes/collision/caster_wheel_base.stl"/>
-      </geometry>
-    </collision>
+
   </link>
   <gazebo reference="fl_caster_rotation_link">
     <material>Gazebo/Grey</material>
   </gazebo>
   <!-- caster wheel -->
-  <joint name="fl_caster_wheel_joint" type="continuous">
+  <joint name="fl_caster_wheel_joint" type="fixed">
     <origin rpy="0 0 0" xyz="-0.0382 0 -0.094"/>
     <parent link="fl_caster_rotation_link"/>
     <child link="fl_caster_wheel_link"/>
@@ -190,6 +187,8 @@
   </link>
   <gazebo reference="fl_caster_wheel_link">
     <material>Gazebo/FlatBlack</material>
+    <mu1>0.01</mu1>
+    <mu2>0.01</mu2>
   </gazebo>
   <!-- caster hub -->
   <joint name="fr_caster_rotation_joint" type="continuous">
@@ -215,18 +214,13 @@
         <color rgba="0.79 0.82 0.93 1"/>
       </material>
     </visual>
-    <collision>
-      <origin rpy="0 0 0" xyz="0 0 0"/>
-      <geometry>
-        <mesh filename="package://mir_description/meshes/collision/caster_wheel_base.stl"/>
-      </geometry>
-    </collision>
+
   </link>
   <gazebo reference="fr_caster_rotation_link">
     <material>Gazebo/Grey</material>
   </gazebo>
   <!-- caster wheel -->
-  <joint name="fr_caster_wheel_joint" type="continuous">
+  <joint name="fr_caster_wheel_joint" type="fixed">
     <origin rpy="0 0 0" xyz="-0.0382 0 -0.094"/>
     <parent link="fr_caster_rotation_link"/>
     <child link="fr_caster_wheel_link"/>
@@ -256,6 +250,8 @@
   </link>
   <gazebo reference="fr_caster_wheel_link">
     <material>Gazebo/FlatBlack</material>
+    <mu1>0.01</mu1>
+    <mu2>0.01</mu2>
   </gazebo>
   <!-- caster hub -->
   <joint name="bl_caster_rotation_joint" type="continuous">
@@ -281,18 +277,13 @@
         <color rgba="0.79 0.82 0.93 1"/>
       </material>
     </visual>
-    <collision>
-      <origin rpy="0 0 0" xyz="0 0 0"/>
-      <geometry>
-        <mesh filename="package://mir_description/meshes/collision/caster_wheel_base.stl"/>
-      </geometry>
-    </collision>
+
   </link>
   <gazebo reference="bl_caster_rotation_link">
     <material>Gazebo/Grey</material>
   </gazebo>
   <!-- caster wheel -->
-  <joint name="bl_caster_wheel_joint" type="continuous">
+  <joint name="bl_caster_wheel_joint" type="fixed">
     <origin rpy="0 0 0" xyz="-0.0382 0 -0.094"/>
     <parent link="bl_caster_rotation_link"/>
     <child link="bl_caster_wheel_link"/>
@@ -322,6 +313,8 @@
   </link>
   <gazebo reference="bl_caster_wheel_link">
     <material>Gazebo/FlatBlack</material>
+    <mu1>0.01</mu1>
+    <mu2>0.01</mu2>
   </gazebo>
   <!-- caster hub -->
   <joint name="br_caster_rotation_joint" type="continuous">
@@ -347,18 +340,13 @@
         <color rgba="0.79 0.82 0.93 1"/>
       </material>
     </visual>
-    <collision>
-      <origin rpy="0 0 0" xyz="0 0 0"/>
-      <geometry>
-        <mesh filename="package://mir_description/meshes/collision/caster_wheel_base.stl"/>
-      </geometry>
-    </collision>
+
   </link>
   <gazebo reference="br_caster_rotation_link">
     <material>Gazebo/Grey</material>
   </gazebo>
   <!-- caster wheel -->
-  <joint name="br_caster_wheel_joint" type="continuous">
+  <joint name="br_caster_wheel_joint" type="fixed">
     <origin rpy="0 0 0" xyz="-0.0382 0 -0.094"/>
     <parent link="br_caster_rotation_link"/>
     <child link="br_caster_wheel_link"/>
@@ -388,6 +376,8 @@
   </link>
   <gazebo reference="br_caster_wheel_link">
     <material>Gazebo/FlatBlack</material>
+    <mu1>0.01</mu1>
+    <mu2>0.01</mu2>
   </gazebo>
   <joint name="base_link_surface_joint" type="fixed">
     <origin rpy="0 0 0" xyz="0.037646 0 0.352"/>
@@ -396,89 +386,36 @@
     <axis xyz="0 0 1"/>
   </joint>
   <link name="surface"/>
-  <transmission name="left_wheel_trans">
-    <type>transmission_interface/SimpleTransmission</type>
-    <joint name="left_wheel_joint">
-      <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
-    </joint>
-    <actuator name="left_wheel_motor">
-      <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
-      <mechanicalReduction>1</mechanicalReduction>
-    </actuator>
-  </transmission>
-  <transmission name="right_wheel_trans">
-    <type>transmission_interface/SimpleTransmission</type>
-    <joint name="right_wheel_joint">
-      <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
-    </joint>
-    <actuator name="right_wheel_motor">
-      <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
-      <mechanicalReduction>1</mechanicalReduction>
-    </actuator>
-  </transmission>
+
   <gazebo reference="left_wheel_link">
-    <mu1 value="200"/>
-    <mu2 value="200"/>
-    <kp value="10000000.0"/>
-    <kd value="1.0"/>
-    <minDepth>0.01</minDepth>
+    <mu1>200.0</mu1>
+    <mu2>200.0</mu2>
+    <fdir1>1 0 0</fdir1>
   </gazebo>
   <gazebo reference="right_wheel_link">
-    <mu1 value="200"/>
-    <mu2 value="200"/>
-    <kp value="10000000.0"/>
-    <kd value="1.0"/>
-    <minDepth>0.01</minDepth>
+    <mu1>200.0</mu1>
+    <mu2>200.0</mu2>
+    <fdir1>1 0 0</fdir1>
   </gazebo>
   <gazebo reference="fl_caster_wheel_link">
-    <mu1 value="1"/>
-    <mu2 value="1"/>
-    <kp value="10000000.0"/>
-    <kd value="1.0"/>
-    <minDepth>0.01</minDepth>
+    <mu1>0.0</mu1>
+    <mu2>0.0</mu2>
   </gazebo>
   <gazebo reference="fr_caster_wheel_link">
-    <mu1 value="1"/>
-    <mu2 value="1"/>
-    <kp value="10000000.0"/>
-    <kd value="1.0"/>
-    <minDepth>0.01</minDepth>
+    <mu1>0.0</mu1>
+    <mu2>0.0</mu2>
   </gazebo>
   <gazebo reference="bl_caster_wheel_link">
-    <mu1 value="1"/>
-    <mu2 value="1"/>
-    <kp value="10000000.0"/>
-    <kd value="1.0"/>
-    <minDepth>0.01</minDepth>
+    <mu1>0.0</mu1>
+    <mu2>0.0</mu2>
   </gazebo>
   <gazebo reference="br_caster_wheel_link">
-    <mu1 value="1"/>
-    <mu2 value="1"/>
-    <kp value="10000000.0"/>
-    <kd value="1.0"/>
-    <minDepth>0.01</minDepth>
+    <mu1>0.0</mu1>
+    <mu2>0.0</mu2>
   </gazebo>
-  <!-- Gazebo Harmonic: native DiffDrive plugin actuates wheels directly from
-       /cmd_vel and publishes /odom + TF without a separate ROS controller. -->
-  <gazebo>
-    <plugin filename="gz-sim-diff-drive-system"
-            name="gz::sim::systems::DiffDrive">
-      <!-- wheel joints as they appear in the URDF -->
-      <left_joint>left_wheel_joint</left_joint>
-      <right_joint>right_wheel_joint</right_joint>
-      <!-- physical parameters from the URDF -->
-      <wheel_separation>0.445208</wheel_separation>
-      <wheel_radius>0.0625</wheel_radius>
-      <!-- topics — bridged via ros_gz_bridge in spawn_maze.launch.py -->
-      <topic>cmd_vel</topic>
-      <odom_topic>odom</odom_topic>
-      <!-- /tf is what ros_gz_bridge watches; /gazebo/tf was never bridged -->
-      <tf_topic>gazebo_tf</tf_topic>
-      <frame_id>odom</frame_id>
-      <child_frame_id>base_footprint</child_frame_id>
-      <odom_publish_frequency>50</odom_publish_frequency>
-    </plugin>
 
+
+  <gazebo>
     <!-- Gazebo Harmonic: Joint State Publisher to publish wheel/caster angles -->
     <plugin filename="gz-sim-joint-state-publisher-system"
             name="gz::sim::systems::JointStatePublisher">

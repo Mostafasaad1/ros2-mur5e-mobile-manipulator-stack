@@ -1,0 +1,42 @@
+# joint_limits.yaml allows override of limits specified in URDF.
+joint_limits:
+  ur5e_shoulder_pan_joint:
+    has_velocity_limits: true
+    max_velocity: 3.141592653589793
+    has_acceleration_limits: true
+    max_acceleration: 5.0
+  ur5e_shoulder_lift_joint:
+    has_velocity_limits: true
+    max_velocity: 3.141592653589793
+    has_acceleration_limits: true
+    max_acceleration: 5.0
+  ur5e_elbow_joint:
+    has_velocity_limits: true
+    max_velocity: 3.141592653589793
+    has_acceleration_limits: true
+    max_acceleration: 5.0
+  ur5e_wrist_1_joint:
+    has_velocity_limits: true
+    max_velocity: 3.141592653589793
+    has_acceleration_limits: true
+    max_acceleration: 5.0
+  ur5e_wrist_2_joint:
+    has_velocity_limits: true
+    max_velocity: 3.141592653589793
+    has_acceleration_limits: true
+    max_acceleration: 5.0
+  ur5e_wrist_3_joint:
+    has_velocity_limits: true
+    max_velocity: 3.141592653589793
+    has_acceleration_limits: true
+    max_acceleration: 5.0
+  finger_left_joint:
+    has_velocity_limits: true
+    max_velocity: 0.1
+    has_acceleration_limits: true
+    max_acceleration: 1.0
+  finger_right_joint:
+    has_velocity_limits: true
+    max_velocity: 0.1
+    has_acceleration_limits: true
+    max_acceleration: 1.0
