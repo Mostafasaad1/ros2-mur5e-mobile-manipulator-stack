@@ -52,6 +52,12 @@ def generate_launch_description():
         LaunchConfiguration('world')
     ])
 
+    gz_gui_config_path = PathJoinSubstitution([
+        mobile_manipulator_gazebo_dir,
+        'config',
+        'gazebo_gui.config'
+    ])
+
     # Build gz_args depending on headless parameter
     # If headless is true, run with '-r -s', otherwise '-r'
     gz_args_prefix = PythonExpression([
@@ -90,7 +96,10 @@ def generate_launch_description():
             'gz_args': [
                 gz_args_prefix,
                 ' ',
-                world_path
+                world_path,
+                ' ',
+                '--gui-config ',
+                gz_gui_config_path,
             ],
             'on_exit_shutdown': 'true',
         }.items()
