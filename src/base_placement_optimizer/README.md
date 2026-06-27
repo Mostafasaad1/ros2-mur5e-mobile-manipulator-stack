@@ -2,6 +2,8 @@
 
 This package provides a ROS 2 Action Server for computing optimal base placement poses for a mobile manipulator. It takes a target object pose in the world and returns a kinematically reachable, collision-safe base pose.
 
+For a detailed explanation of the system architecture, algorithm flowcharts, and how to run the full end-to-end example, please read **[ARCHITECTURE.md](ARCHITECTURE.md)**.
+
 ## Action Server
 
 - **Action Name:** `optimize_placement`

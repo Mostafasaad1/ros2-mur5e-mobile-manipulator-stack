@@ -132,7 +132,7 @@ ROS 2 Action Server that computes a reachable, collision-safe base pose around a
 3. Score each pose via IK feasibility + manipulability.
 4. Score = `alpha × manipulability + (1 − alpha) × (1 / path_distance)`.
 
-See [`src/base_placement_optimizer/README.md`](src/base_placement_optimizer/README.md) for full parameter reference.
+See [`src/base_placement_optimizer/README.md`](src/base_placement_optimizer/README.md) for full parameter reference, and **[`src/base_placement_optimizer/ARCHITECTURE.md`](src/base_placement_optimizer/ARCHITECTURE.md)** for a deep dive into the system architecture, algorithm flowcharts, and how to run the end-to-end task example.
 
 ### `pick_place_orchestrator`
 The mission executive. Exposes a `PickPlaceMission` action server and drives execution through a BehaviorTree.CPP tree.
