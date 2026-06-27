@@ -8,5 +8,6 @@ camera_sensor:
   point_subsample: 1
   padding_offset: 0.1
   padding_scale: 1.0
-  max_update_rate: 1.0
+  max_update_rate: 10.0    # honest ceiling; 10 Hz is sufficient for collision avoidance viz
   filtered_cloud_topic: filtered_cloud
+  octomap_resolution: 0.05 # explicit voxel size (MoveIt default is 0.1 m)
