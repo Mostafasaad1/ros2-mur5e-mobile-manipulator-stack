@@ -21,7 +21,7 @@ source install/setup.bash
 - [mobile\_manipulator\_moveit\_config](#mobile_manipulator_moveit_config) — MoveIt 2
 - [mobile\_manipulator\_nav](#mobile_manipulator_nav) — Nav2 navigation
 - [mobile\_manipulator\_slam](#mobile_manipulator_slam) — SLAM mapping
-- [mir\_description](#mir_description) — MiR 250 base visualiser
+- [mir\_description](#mir_description) — MiR 100 base visualiser
 - [ur\_description](#ur_description) — UR5e arm tools
 
 ---
@@ -145,7 +145,7 @@ ros2 launch mobile_manipulator_gazebo simulation.launch.py x_pose:=-2.0 y_pose:=
 
 ## `mobile_manipulator_description`
 
-> **Robot URDF / xacro tooling.** Provides the combined MiR 250 + UR5e + gripper description and helpers for visualisation and quick Gazebo tests.
+> **Robot URDF / xacro tooling.** Provides the combined MiR 100 + UR5e + gripper description and helpers for visualisation and quick Gazebo tests.
 
 ### `display.launch.py`
 
@@ -362,7 +362,7 @@ ros2 run nav2_map_server map_saver_cli -f src/mobile_manipulator_slam/maps/nav_w
 
 ## `mir_description`
 
-> **MiR 250 base description.** Standalone URDF and RViz viewer for the MiR 250 omnidirectional mobile base.
+> **MiR 100 base description.** Standalone URDF and RViz viewer for the MiR 100 differential drive mobile base.
 
 ### `display.launch.py`
 

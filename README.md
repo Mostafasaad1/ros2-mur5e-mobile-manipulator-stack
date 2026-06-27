@@ -1,6 +1,18 @@
-# Mobile Manipulator
+# MUR5e (UR5e on MiR100)
 
-An autonomous mobile manipulation system built on **ROS 2 Jazzy** and **Gazebo Harmonic**. The robot — a **MiR 100** omnidirectional base carrying a **UR5e** 6-DOF arm with a parallel-jaw gripper — can locate a target object, navigate to an optimal pick pose, grasp the object, carry it to a drop location, and place it, all under the supervision of a **BehaviorTree.CPP** mission executive.
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/3a18e1ab-bb63-461e-99d1-662592d28470" width="220" alt="MUR5e Robot Icon" />
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/ROS-2_Jazzy-blue?style=flat-square&logo=ros&logoColor=white" alt="ROS 2 Jazzy" />
+  <img src="https://img.shields.io/badge/Gazebo-Harmonic-orange?style=flat-square&logo=gazebo&logoColor=white" alt="Gazebo Harmonic" />
+  <img src="https://img.shields.io/badge/MoveIt-2-blue?style=flat-square" alt="MoveIt 2" />
+  <img src="https://img.shields.io/badge/Nav2-Jazzy-red?style=flat-square" alt="Nav2" />
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-green.svg?style=flat-square" alt="License" /></a>
+</p>
+
+An autonomous mobile manipulation system built on **ROS 2 Jazzy** and **Gazebo Harmonic**. The robot — a **MiR 100** differential drive base carrying a **UR5e** 6-DOF arm with a parallel-jaw gripper — can locate a target object, navigate to an optimal pick pose, grasp the object, carry it to a drop location, and place it, all under the supervision of a **BehaviorTree.CPP** mission executive.
 
 ---
 
@@ -46,7 +58,7 @@ The 12-step mission (6 pick + 6 place) is encoded in a single BehaviorTree XML f
 
 | Layer | Technology |
 |---|---|
-| Mobile Base | MiR 100 (differential / omni drive) |
+| Mobile Base | MiR 100 (differential drive) |
 | Manipulator | Universal Robots UR5e (6-DOF) |
 | Gripper | Parallel-jaw (prismatic fingers) |
 | Simulator | Gazebo Harmonic (`ros_gz_sim`) |
@@ -89,6 +101,9 @@ Provides the unified robot URDF/xacro.
 - **`mobile_manipulator.urdf.xacro`** — Assembles the MiR 100 base, UR5e arm (mounted on the `surface` link), safety collision volume, and parallel-jaw gripper.
 - **`mobile_manipulator.gazebo.xacro`** — Adds Gazebo plugins (ros2_control, differential drive, depth camera, IMU, etc.).
 
+<br/>
+<img width="480" height="270" alt="Robot Description Visualisation" src="https://github.com/user-attachments/assets/cc760f68-91d3-4b93-b585-bd319e97ae51" />
+
 ### `mobile_manipulator_gazebo`
 Simulation world and launch infrastructure.
 
@@ -109,17 +124,28 @@ Online SLAM using [slam_toolbox](https://github.com/SteveMacenski/slam_toolbox).
 - Configured for async online mapping (`mapper_params_online_async.yaml`).
 - RViz preset included for live map visualization.
 
+<br/>
+<img width="480" height="270" alt="SLAM Demo" src="https://github.com/user-attachments/assets/59093d08-08a7-45df-b1e2-0987b3b21738" />
+
 ### `mobile_manipulator_nav`
 Nav2 bringup and a custom lifecycle condition node.
 
 - **`is_arm_stowed_condition`** — Monitors the arm joint state and prevents navigation when the arm is not in its safe travel pose.
 - Launch variants: full Nav2, nav2 without collision monitor, and a minimal nav_bringup.
 
+<br/>
+<img width="480" height="270" alt="Navigation Demo" src="https://github.com/user-attachments/assets/7bd079b4-632d-4106-a076-16ac18fc476c" />
+
 ### `mobile_manipulator_moveit_config`
 Auto-generated (and hand-tuned) MoveIt 2 configuration.
 
 - Planning group: `robot_arm` (UR5e joints).
 - SRDF defines `stowed` named state for safe travel.
+
+<br/>
+<img width="480" height="270" alt="MoveIt 2 Joint Trajectory Control" src="https://github.com/user-attachments/assets/d9dbdd4d-0688-4eb1-a44a-e8ef7e992d2f" />
+<img width="480" height="270" alt="OctoMap 3D Occupancy Grid Representation" src="https://github.com/user-attachments/assets/978cc2d2-1db7-4118-a7a6-9f1264b3bc37" />
+
 
 ### `base_placement_optimizer`
 ROS 2 Action Server that computes a reachable, collision-safe base pose around a target object.
@@ -133,6 +159,9 @@ ROS 2 Action Server that computes a reachable, collision-safe base pose around a
 4. Score = `alpha × manipulability + (1 − alpha) × (1 / path_distance)`.
 
 See [`src/base_placement_optimizer/README.md`](src/base_placement_optimizer/README.md) for full parameter reference, and **[`src/base_placement_optimizer/ARCHITECTURE.md`](src/base_placement_optimizer/ARCHITECTURE.md)** for a deep dive into the system architecture, algorithm flowcharts, and how to run the end-to-end task example.
+
+<br/>
+<img width="480" height="270" alt="Base Placement Optimizer Demo" src="https://github.com/user-attachments/assets/eba0b9b1-af66-48ee-abc9-22e476d65e41" />
 
 ### `pick_place_orchestrator`
 The mission executive. Exposes a `PickPlaceMission` action server and drives execution through a BehaviorTree.CPP tree.
