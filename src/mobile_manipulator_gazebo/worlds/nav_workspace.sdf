@@ -194,11 +194,11 @@
     <!-- Pick table: accessible via WIDE door (Y center ≈ 4.0) -->
     <model name="pick_table">
       <static>true</static>
-      <pose>5.0 4.0 0.4 0 0 0</pose>
+      <pose>4.5 4.0 0.3 0 0 0</pose>
       <link name="link">
-        <collision name="col"><geometry><box><size>1.2 0.8 0.8</size></box></geometry></collision>
+        <collision name="col"><geometry><box><size>0.6 0.5 0.6</size></box></geometry></collision>
         <visual name="vis">
-          <geometry><box><size>1.2 0.8 0.8</size></box></geometry>
+          <geometry><box><size>0.6 0.5 0.6</size></box></geometry>
           <material><ambient>0.2 0.6 0.3 1</ambient><diffuse>0.2 0.6 0.3 1</diffuse></material>
         </visual>
       </link>
@@ -207,11 +207,11 @@
     <!-- Place table: accessible via NARROW passage (Y center ≈ -1.75) -->
     <model name="place_table">
       <static>true</static>
-      <pose>5.0 -4.0 0.4 0 0 0</pose>
+      <pose>4.5 -4.0 0.3 0 0 0</pose>
       <link name="link">
-        <collision name="col"><geometry><box><size>1.2 0.8 0.8</size></box></geometry></collision>
+        <collision name="col"><geometry><box><size>0.6 0.5 0.6</size></box></geometry></collision>
         <visual name="vis">
-          <geometry><box><size>1.2 0.8 0.8</size></box></geometry>
+          <geometry><box><size>0.6 0.5 0.6</size></box></geometry>
           <material><ambient>0.7 0.2 0.2 1</ambient><diffuse>0.7 0.2 0.2 1</diffuse></material>
         </visual>
       </link>
@@ -220,7 +220,7 @@
     <!-- Workpiece on pick table -->
     <model name="workpiece">
       <static>false</static>
-      <pose>5.0 4.0 0.88 0 0 0</pose>
+      <pose>4.5 4.0 0.68 0 0 0</pose>
       <link name="link">
         <inertial><mass>0.3</mass>
           <inertia><ixx>0.0002</ixx><ixy>0</ixy><ixz>0</ixz>

@@ -44,8 +44,8 @@ WALLS = [
     (-3.5,  3.0,  0.5, 0.5),
     (-3.5, -3.0,  0.5, 0.5),
     # Tables (solid obstacles in map)
-    ( 5.0,  4.0,  1.2, 0.8),   # pick table
-    ( 5.0, -4.0,  1.2, 0.8),   # place table
+    ( 4.5,  4.0,  0.6, 0.5),   # pick table
+    ( 4.5, -4.0,  0.6, 0.5),   # place table
 ]
 
 # ── Helper: world coords → pixel (col, row) ───────────────────────────────────
@@ -117,5 +117,5 @@ print(f"  Size      : {WIDTH} × {HEIGHT} pixels  @  {RES} m/px")
 print(f"  Wide door : Y ∈ [ 2.5,  5.5]  → 3.0 m opening")
 print(f"  Narrow gap: Y ∈ [-2.5, -1.0]  → 1.5 m opening")
 print(f"  Spawn     : (-6.0, 0.0)")
-print(f"  Pick table: ( 5.0, 4.0)  — via wide door")
-print(f"  Place tbl : ( 5.0,-4.0)  — via narrow passage (high cost) or wide door (longer)")
+print(f"  Pick table: ( 4.5, 4.0)  — via wide door")
+print(f"  Place tbl : ( 4.5,-4.0)  — via narrow passage (high cost) or wide door (longer)")

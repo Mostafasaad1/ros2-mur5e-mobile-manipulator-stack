@@ -86,40 +86,34 @@ controller_server:
     general_goal_checker:
       stateful: True
       plugin: "nav2_controller::SimpleGoalChecker"
-      xy_goal_tolerance: 0.05
+      # Cylinder diameter = 0.10m, finger half-span = 0.05m.
+      # Any Y error > ~0.02m causes a missed grasp.
+      # 0.04m is tight enough for reliable grasping and achievable by differential drive.
+      xy_goal_tolerance: 0.04
       # Set to full-circle (6.28 rad) so Nav2 declares success on XY alone.
-      # The optimizer encodes a heading ~202° while the robot starts at 0° —
-      # that is a 197° in-place rotation Nav2 would spin through repeatedly.
-      # Heading alignment is handled by run_task.py with a P-controller after
-      # navigation completes, giving smooth, overshoot-free convergence.
       yaw_goal_tolerance: 6.28
     FollowPath:
       plugin: "nav2_regulated_pure_pursuit_controller::RegulatedPurePursuitController"
-      desired_linear_vel: 0.26
-      lookahead_dist: 0.4
-      min_lookahead_dist: 0.2
-      max_lookahead_dist: 0.6
+      desired_linear_vel: 1.5
+      lookahead_dist: 1.2
+      min_lookahead_dist: 0.5
+      max_lookahead_dist: 1.8
       lookahead_time: 1.5
-      # Reduced from 0.5 to 0.15 rad/s.
-      # At 20 Hz, 0.15 rad/s → 0.0075 rad/step, giving ~20 steps to settle into the
-      # yaw_goal_tolerance zone — well within the deceleration window.
-      rotate_to_heading_angular_vel: 0.15
+      rotate_to_heading_angular_vel: 0.5
       transform_tolerance: 0.5
       use_velocity_scaled_lookahead_dist: false
-      min_approach_linear_velocity: 0.05
-      approach_velocity_scaling_dist: 0.4
-      use_collision_detection: true
-      max_allowed_time_to_collision_up_to_carrot: 1.0
+      min_approach_linear_velocity: 0.15
+      approach_velocity_scaling_dist: 0.8
+      use_collision_detection: false
+      max_allowed_time_to_collision_up_to_carrot: 3.0
       use_regulated_linear_velocity_scaling: true
       use_cost_regulated_linear_velocity_scaling: false
       regulated_linear_scaling_min_radius: 0.9
-      regulated_linear_scaling_min_speed: 0.05
+      regulated_linear_scaling_min_speed: 0.15
       use_rotate_to_heading: true
       allow_reversing: false
       rotate_to_heading_min_angle: 0.152
-      # Reduced from 2.0 to 1.0 rad/s². Prevents velocity build-up during the
-      # rotate-to-heading phase from carrying overshoot momentum past the goal.
-      max_angular_accel: 1.0
+      max_angular_accel: 10.0
       max_robot_pose_search_dist: 10.0
 
 planner_server:
@@ -231,13 +225,10 @@ velocity_smoother:
     use_sim_time: True
     enable_stamped_cmd_vel: false
     feedback: "OPEN_LOOP"
-    max_velocity: [0.26, 0.0, 0.5]
-    min_velocity: [-0.26, 0.0, -0.5]
-    # Angular accel reduced from 2.0 to 1.0 to match controller max_angular_accel.
-    # Caps the angular velocity the smoother can forward to cmd_vel, preventing
-    # the smoother from masking the controller's reduced angular commands.
-    max_accel: [1.0, 0.0, 1.0]
-    max_decel: [-1.0, 0.0, -1.0]
+    max_velocity: [1.5, 0.0, 5.0]
+    min_velocity: [-1.5, 0.0, -5.0]
+    max_accel: [6.0, 0.0, 8.0]
+    max_decel: [-6.0, 0.0, -8.0]
     odom_topic: "odom"
     odom_duration: 0.1
     deadband_velocity: [0.0, 0.0, 0.0]

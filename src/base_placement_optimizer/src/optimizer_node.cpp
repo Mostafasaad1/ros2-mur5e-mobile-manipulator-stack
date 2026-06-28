@@ -36,9 +36,13 @@ BasePlacementOptimizerNode::BasePlacementOptimizerNode(const rclcpp::NodeOptions
   map_frame_ = this->declare_parameter("map_frame", "map");
   planning_group_ = this->declare_parameter("planning_group", "robot_arm");
   costmap_topic_ = this->declare_parameter("costmap_topic", "/global_costmap/costmap");
-  reach_radius_ = this->declare_parameter("reach_radius", 0.7);
+  // reach_radius: distance from target object to robot base center.
+  // Front face of robot is at cx + 0.495m. For the front to clear the table
+  // lethal zone (table_edge = object_x - 0.3), min r ≈ 0.80m.
+  // Sweep ±0.20 gives [0.60, 1.00m], with first PASS at r≈0.80m.
+  reach_radius_ = this->declare_parameter("reach_radius", 0.80);
   angular_samples_ = this->declare_parameter("angular_samples", 16);
-  ik_timeout_ = this->declare_parameter("ik_timeout", 0.002);
+  ik_timeout_ = this->declare_parameter("ik_timeout", 0.010);
   alpha_ = this->declare_parameter("alpha", 0.5);
 
   // Initialize TF
@@ -200,48 +204,49 @@ void BasePlacementOptimizerNode::execute(
     }
 
     double angle = (2.0 * M_PI * i) / angular_samples_;
-
-    // Candidate position (radius distance from object)
-    double cx = map_target_pose.pose.position.x + reach_radius_ * std::cos(angle);
-    double cy = map_target_pose.pose.position.y + reach_radius_ * std::sin(angle);
-
-    // US2: Obstacle Check
-    if (!is_candidate_safe(cx, cy, costmap_snapshot)) {
-      continue;
-    }
-
     // The robot should face the object
     double ctheta = angle + M_PI; // point inwards
 
-    // Create candidate transform (T_map_base)
-    Eigen::Isometry3d T_map_base = Eigen::Isometry3d::Identity();
-    T_map_base.translation() = Eigen::Vector3d(cx, cy, 0.0);
-    T_map_base.linear() = Eigen::AngleAxisd(ctheta, Eigen::Vector3d::UnitZ()).toRotationMatrix();
+    // Sweep from reach_radius_ - 0.20 to reach_radius_ + 0.20
+    for (double r = reach_radius_ - 0.20; r <= reach_radius_ + 0.20 + 1e-4; r += 0.04) {
+      double cx = map_target_pose.pose.position.x + r * std::cos(angle);
+      double cy = map_target_pose.pose.position.y + r * std::sin(angle);
 
-    // Convert object pose to base_link frame
-    Eigen::Isometry3d T_base_obj = T_map_base.inverse() * T_map_obj;
+      // US2: Obstacle Check (Full footprint check)
+      if (!is_candidate_safe(cx, cy, ctheta, costmap_snapshot)) {
+        continue;
+      }
 
-    // Run IK
-    auto planning_scene = planning_scene_monitor_->getPlanningScene();
-    moveit::core::GroupStateValidityCallbackFn collision_callback =
-      [planning_scene](moveit::core::RobotState * rs, const moveit::core::JointModelGroup * jmg,
-      const double * joint_group_variable_values) {
-        rs->setJointGroupPositions(jmg, joint_group_variable_values);
-        rs->update();
-        return !planning_scene->isStateColliding(*rs, jmg->getName());
-      };
+      // Create candidate transform (T_map_base)
+      Eigen::Isometry3d T_map_base = Eigen::Isometry3d::Identity();
+      T_map_base.translation() = Eigen::Vector3d(cx, cy, 0.0);
+      T_map_base.linear() = Eigen::AngleAxisd(ctheta, Eigen::Vector3d::UnitZ()).toRotationMatrix();
 
-    bool ik_valid = robot_state.setFromIK(joint_model_group, T_base_obj, ik_timeout_,
-        collision_callback);
+      // Convert object pose to base_link frame
+      Eigen::Isometry3d T_base_obj = T_map_base.inverse() * T_map_obj;
 
-    if (ik_valid) {
-      double manipulability = compute_manipulability(robot_state, joint_model_group);
-      double distance = std::hypot(cx - map_target_pose.pose.position.x,
-          cy - map_target_pose.pose.position.y);
-      double dist_score = distance > 0.01 ? (1.0 / distance) : 100.0;
-      double score = (alpha_ * manipulability) + ((1.0 - alpha_) * dist_score);
+      // Run IK
+      auto planning_scene = planning_scene_monitor_->getPlanningScene();
+      moveit::core::GroupStateValidityCallbackFn collision_callback =
+        [planning_scene](moveit::core::RobotState * rs, const moveit::core::JointModelGroup * jmg,
+        const double * joint_group_variable_values) {
+          rs->setJointGroupPositions(jmg, joint_group_variable_values);
+          rs->update();
+          return !planning_scene->isStateColliding(*rs, jmg->getName());
+        };
 
-      valid_candidates.push_back({cx, cy, ctheta, score, manipulability, distance});
+      bool ik_valid = robot_state.setFromIK(joint_model_group, T_base_obj, ik_timeout_,
+          collision_callback);
+
+      if (ik_valid) {
+        double manipulability = compute_manipulability(robot_state, joint_model_group);
+        double distance = std::hypot(cx - map_target_pose.pose.position.x,
+            cy - map_target_pose.pose.position.y);
+        double dist_score = distance > 0.01 ? (1.0 / distance) : 100.0;
+        double score = (alpha_ * manipulability) + ((1.0 - alpha_) * dist_score);
+
+        valid_candidates.push_back({cx, cy, ctheta, score, manipulability, distance});
+      }
     }
   }
 
@@ -281,39 +286,74 @@ void BasePlacementOptimizerNode::costmap_callback(const nav_msgs::msg::Occupancy
 }
 
 bool BasePlacementOptimizerNode::is_candidate_safe(
-  double x, double y,
+  double x, double y, double theta,
   const nav_msgs::msg::OccupancyGrid::SharedPtr & costmap) const
 {
   if (!costmap) {
-    // If no costmap is available, assume safe or fail? The assumption is that Nav2 provides it.
-    // For now, if no costmap, we skip safety check.
+    // If no costmap is available, assume safe
     return true;
   }
 
-  // Convert world coordinates to map cell indices
-  // MapMetaData.origin is geometry_msgs::Pose (not PoseStamped)
+  // Base footprint (from nav2_params.yaml)
+  std::vector<std::pair<double, double>> footprint = {
+    {0.495, 0.34}, {0.495, -0.34}, {-0.495, -0.34}, {-0.495, 0.34}
+  };
+
+  // Sample points along the footprint boundary
+  std::vector<std::pair<double, double>> check_points;
+  check_points.push_back({0.0, 0.0}); // Also check center
+  
+  int num_samples = 5;
+  for (size_t i = 0; i < footprint.size(); ++i) {
+    auto p1 = footprint[i];
+    auto p2 = footprint[(i + 1) % footprint.size()];
+    for (int j = 0; j < num_samples; ++j) {
+      double t = static_cast<double>(j) / num_samples;
+      check_points.push_back({
+        p1.first + t * (p2.first - p1.first),
+        p1.second + t * (p2.second - p1.second)
+      });
+    }
+  }
+
+  double cos_th = std::cos(theta);
+  double sin_th = std::sin(theta);
   double origin_x = costmap->info.origin.position.x;
   double origin_y = costmap->info.origin.position.y;
   double resolution = costmap->info.resolution;
 
-  int cell_x = static_cast<int>((x - origin_x) / resolution);
-  int cell_y = static_cast<int>((y - origin_y) / resolution);
+  for (const auto& pt : check_points) {
+    // Transform footprint point to map frame
+    double mx = x + pt.first * cos_th - pt.second * sin_th;
+    double my = y + pt.first * sin_th + pt.second * cos_th;
 
-  // Check bounds
-  if (cell_x < 0 || cell_x >= static_cast<int>(costmap->info.width) ||
-    cell_y < 0 || cell_y >= static_cast<int>(costmap->info.height))
-  {
-    return false; // Out of bounds is not safe
-  }
+    int cell_x = static_cast<int>((mx - origin_x) / resolution);
+    int cell_y = static_cast<int>((my - origin_y) / resolution);
 
-  int index = cell_y * costmap->info.width + cell_x;
-  // OccupancyGrid data is int8_t, but Nav2 uses uint8_t-range values (0-254)
-  // Cast to uint8_t to correctly compare LETHAL (254) and INSCRIBED (253)
-  uint8_t cost = static_cast<uint8_t>(costmap->data[index]);
+    if (cell_x < 0 || cell_x >= static_cast<int>(costmap->info.width) ||
+        cell_y < 0 || cell_y >= static_cast<int>(costmap->info.height))
+    {
+      return false; // Out of bounds is not safe
+    }
 
-  // 254 is LETHAL_OBSTACLE, 253 is INSCRIBED_INFLATED_OBSTACLE
-  if (cost >= 253) {
-    return false;
+    int index = cell_y * costmap->info.width + cell_x;
+    int8_t cost = costmap->data[index];
+
+    bool is_center = (pt.first == 0.0 && pt.second == 0.0);
+    if (is_center) {
+      // Center safety: reject if inscribed-radius zone or lethal (cost >= 99) or unknown
+      // This ensures the robot body center does not sit inside the inflation inscribed band
+      if (cost >= 99 || cost < 0) {
+        return false;
+      }
+    } else {
+      // Footprint boundary safety: reject only if actual lethal (100) or unknown (-1)
+      // Boundary points may sit in the inflated zone (cost 1..98) as long as they
+      // don't intersect the obstacle itself
+      if (cost == 100 || cost < 0) {
+        return false;
+      }
+    }
   }
 
   return true;

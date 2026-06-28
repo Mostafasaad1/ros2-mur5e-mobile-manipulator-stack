@@ -68,11 +68,26 @@ rclcpp_components_register_node(pick_place_orchestrator_lib
   EXECUTABLE orchestrator_node
 )
 
+# Build Mission Trigger Node executable
+add_executable(mission_trigger_node src/mission_trigger_node.cpp)
+target_compile_features(mission_trigger_node PUBLIC cxx_std_17)
+ament_target_dependencies(mission_trigger_node
+  rclcpp
+  rclcpp_action
+  geometry_msgs
+)
+rosidl_target_interfaces(mission_trigger_node ${PROJECT_NAME} "rosidl_typesupport_cpp")
+
 # Install targets
 install(TARGETS pick_place_orchestrator_lib
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
+)
+
+# Install mission_trigger_node to lib/<package_name> for ros2 launch
+install(TARGETS mission_trigger_node
+  DESTINATION lib/${PROJECT_NAME}
 )
 
 install(DIRECTORY include/

@@ -73,7 +73,7 @@ private:
 
   void costmap_callback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg);
   bool is_candidate_safe(
-    double x, double y,
+    double x, double y, double theta,
     const nav_msgs::msg::OccupancyGrid::SharedPtr & costmap) const;
   double compute_manipulability(
     const moveit::core::RobotState & state,

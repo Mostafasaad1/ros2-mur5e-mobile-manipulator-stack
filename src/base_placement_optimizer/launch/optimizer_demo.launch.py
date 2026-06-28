@@ -57,7 +57,6 @@ def generate_launch_description():
         .to_moveit_configs()
     )
 
-    # 4. Optimizer Node
     optimizer_node = Node(
         package='base_placement_optimizer',
         executable='optimizer_node_exe',
@@ -65,7 +64,10 @@ def generate_launch_description():
         output='screen',
         parameters=[
             moveit_configs.to_dict(),
-            {'use_sim_time': True}
+            {
+                'reach_radius': 0.80,
+                'use_sim_time': True
+            }
         ]
     )
 

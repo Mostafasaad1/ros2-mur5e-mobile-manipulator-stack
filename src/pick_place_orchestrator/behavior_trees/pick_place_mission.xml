@@ -29,6 +29,14 @@
                         step="EXECUTE_PICK"
                         step_index="4" />
                         
+        <!-- Approach horizontally first -->
+        <MoveArm target_pose="{pick_pose}"
+                 x_offset="0.15"
+                 phase="PICK_PHASE"
+                 step="EXECUTE_PICK"
+                 step_index="4" />
+                        
+        <!-- Advance to grasp -->
         <MoveArm target_pose="{pick_pose}"
                  phase="PICK_PHASE"
                  step="EXECUTE_PICK"
@@ -38,6 +46,13 @@
                         phase="PICK_PHASE"
                         step="EXECUTE_PICK"
                         step_index="4" />
+
+        <!-- Lift straight up -->
+        <MoveArm target_pose="{pick_pose}"
+                 z_offset="0.12"
+                 phase="PICK_PHASE"
+                 step="EXECUTE_PICK"
+                 step_index="4" />
                         
         <!-- Step 5: Attach Payload -->
         <AttachPayload object_id="target_payload"
@@ -84,6 +99,14 @@
                             step_index="9" />
                             
             <!-- Step 10: Execute Place (Move, Open) -->
+            <!-- Approach vertically first -->
+            <MoveArm target_pose="{place_pose}"
+                     z_offset="0.12"
+                     phase="PLACE_PHASE"
+                     step="EXECUTE_PLACE"
+                     step_index="10" />
+
+            <!-- Descend to place -->
             <MoveArm target_pose="{place_pose}"
                      phase="PLACE_PHASE"
                      step="EXECUTE_PLACE"
@@ -100,6 +123,13 @@
                            phase="PLACE_PHASE"
                            step="DETACH_PAYLOAD"
                            step_index="11" />
+
+            <!-- Retract horizontally -->
+            <MoveArm target_pose="{place_pose}"
+                     x_offset="0.15"
+                     phase="PLACE_PHASE"
+                     step="EXECUTE_PLACE"
+                     step_index="10" />
                            
             <!-- Step 12: Stow Arm Place -->
             <MoveArm named_pose="stowed"
