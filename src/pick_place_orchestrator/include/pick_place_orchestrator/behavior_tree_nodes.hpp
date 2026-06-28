@@ -123,6 +123,25 @@ private:
   int step_idx_{0};
 };
 
+// 8. VisualServoAction BT Node
+class VisualServoAction : public BT::StatefulActionNode
+{
+public:
+  VisualServoAction(const std::string & name, const BT::NodeConfig & config);
+  static BT::PortsList providedPorts();
+
+  BT::NodeStatus onStart() override;
+  BT::NodeStatus onRunning() override;
+  void onHalted() override;
+
+private:
+  rclcpp::Node::SharedPtr node_;
+  std::shared_ptr<moveit::planning_interface::MoveGroupInterface> move_group_;
+  std::future<moveit::core::MoveItErrorCode> future_;
+  bool started_{false};
+  int step_idx_{0};
+};
+
 // 4. AttachPayloadAction BT Node
 class AttachPayloadAction : public BT::SyncActionNode
 {

@@ -128,4 +128,14 @@
     <limit lower="-0.001" upper="0.04" effort="50.0" velocity="0.1" />
   </joint>
 
+  <!-- Wrist depth camera for visual servoing -->
+  <xacro:include filename="$(find mir_description)/urdf/sensors/realsense_d435.xacro" />
+  <xacro:realsense_d435
+    prefix="wrist_camera"
+    parent="ur5e_wrist_3_link"
+    topic="wrist_camera"
+    xyz="0.05 -0.07 0.0"
+    rpy="0 -1.5708 0" />
+
 </robot>
+

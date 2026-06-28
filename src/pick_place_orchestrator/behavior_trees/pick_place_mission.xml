@@ -35,6 +35,14 @@
                  phase="PICK_PHASE"
                  step="EXECUTE_PICK"
                  step_index="4" />
+
+        <!-- Perform visual servo correction -->
+        <VisualServo target_pose="{pick_pose}"
+                     servo_threshold="0.01"
+                     max_iterations="3"
+                     phase="PICK_PHASE"
+                     step="EXECUTE_PICK"
+                     step_index="4" />
                         
         <!-- Advance to grasp -->
         <MoveArm target_pose="{pick_pose}"

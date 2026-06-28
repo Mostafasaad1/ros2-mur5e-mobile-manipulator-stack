@@ -17,6 +17,10 @@ find_package(moveit_ros_planning_interface REQUIRED)
 find_package(base_placement_optimizer REQUIRED)
 find_package(nav2_msgs REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(cv_bridge REQUIRED)
+find_package(tf2_ros REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
 
 # Generate Action Interfaces
 rosidl_generate_interfaces(${PROJECT_NAME}
@@ -34,6 +38,7 @@ add_library(pick_place_orchestrator_lib SHARED
   src/behavior_tree_nodes/payload_actions.cpp
   src/behavior_tree_nodes/gripper_control_action.cpp
   src/behavior_tree_nodes/check_pose_condition.cpp
+  src/behavior_tree_nodes/visual_servo_action.cpp
   src/orchestrator_node.cpp
 )
 
@@ -57,6 +62,10 @@ ament_target_dependencies(pick_place_orchestrator_lib
   moveit_ros_planning_interface
   base_placement_optimizer
   nav2_msgs
+  sensor_msgs
+  cv_bridge
+  tf2_ros
+  tf2_geometry_msgs
 )
 
 # Link against our generated interfaces

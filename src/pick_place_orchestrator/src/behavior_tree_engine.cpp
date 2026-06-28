@@ -30,6 +30,7 @@ void BehaviorTreeEngine::registerNodes()
   factory_.registerNodeType<DetachPayloadAction>("DetachPayload");
   factory_.registerNodeType<GripperControlAction>("GripperControl");
   factory_.registerNodeType<CheckPoseCondition>("CheckPoseCondition");
+  factory_.registerNodeType<VisualServoAction>("VisualServo");
 }
 
 bool BehaviorTreeEngine::run(

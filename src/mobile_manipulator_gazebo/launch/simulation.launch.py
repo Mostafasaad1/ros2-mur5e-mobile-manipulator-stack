@@ -180,6 +180,10 @@ def generate_launch_description():
         output='screen',
         arguments=[
             '/camera/points@sensor_msgs/msg/PointCloud2[gz.msgs.PointCloudPacked',
+            '/wrist_camera/image@sensor_msgs/msg/Image[gz.msgs.Image',
+            '/wrist_camera/depth_image@sensor_msgs/msg/Image[gz.msgs.Image',
+            '/wrist_camera/camera_info@sensor_msgs/msg/CameraInfo[gz.msgs.CameraInfo',
+            '/wrist_camera/points@sensor_msgs/msg/PointCloud2[gz.msgs.PointCloudPacked',
         ],
         parameters=[{'use_sim_time': use_sim_time}]
     )
