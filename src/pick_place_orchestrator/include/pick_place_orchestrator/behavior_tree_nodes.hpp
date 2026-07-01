@@ -124,6 +124,8 @@ private:
 };
 
 // 8. VisualServoAction BT Node
+struct VisualServoPrivate;  // defined in visual_servo_action.cpp
+
 class VisualServoAction : public BT::StatefulActionNode
 {
 public:
@@ -140,6 +142,8 @@ private:
   std::future<moveit::core::MoveItErrorCode> future_;
   bool started_{false};
   int step_idx_{0};
+  // Fix 5: instance member (NOT static) — one private state per BT node instance
+  std::shared_ptr<VisualServoPrivate> d_;
 };
 
 // 4. AttachPayloadAction BT Node

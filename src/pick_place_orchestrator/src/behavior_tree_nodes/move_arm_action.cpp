@@ -82,19 +82,21 @@ BT::NodeStatus MoveArmAction::onStart()
       double dx = target_pose.pose.position.x - base_x;
       double dy = target_pose.pose.position.y - base_y;
       yaw = std::atan2(dy, dx);
-      RCLCPP_INFO(node_->get_logger(), "MoveArmAction: Aligned grasp yaw to %.2f rad based on base pos (%.2f, %.2f) and target (%.2f, %.2f)",
+      RCLCPP_INFO(node_->get_logger(),
+          "MoveArmAction: Aligned grasp yaw to %.2f rad based on base pos (%.2f, %.2f) and target (%.2f, %.2f)",
         yaw, base_x, base_y, target_pose.pose.position.x, target_pose.pose.position.y);
     } else {
-      RCLCPP_WARN(node_->get_logger(), "MoveArmAction: Could not find optimized base pose on blackboard for phase %s. Using default yaw = 0.0",
+      RCLCPP_WARN(node_->get_logger(),
+          "MoveArmAction: Could not find optimized base pose on blackboard for phase %s. Using default yaw = 0.0",
         phase.c_str());
     }
 
     // Set horizontal grasp orientation (90 deg pitch rotated by yaw around Z)
     double half_yaw = yaw * 0.5;
     target_pose.pose.orientation.x = -0.70710678 * std::sin(half_yaw);
-    target_pose.pose.orientation.y =  0.70710678 * std::cos(half_yaw);
-    target_pose.pose.orientation.z =  0.70710678 * std::sin(half_yaw);
-    target_pose.pose.orientation.w =  0.70710678 * std::cos(half_yaw);
+    target_pose.pose.orientation.y = 0.70710678 * std::cos(half_yaw);
+    target_pose.pose.orientation.z = 0.70710678 * std::sin(half_yaw);
+    target_pose.pose.orientation.w = 0.70710678 * std::cos(half_yaw);
 
     if (x_offset != 0.0) {
       target_pose.pose.position.x -= x_offset * std::cos(yaw);
@@ -104,8 +106,10 @@ BT::NodeStatus MoveArmAction::onStart()
       target_pose.pose.position.z += z_offset;
     }
 
-    RCLCPP_INFO(node_->get_logger(), "MoveArmAction: Planning to target pose in frame: %s (x: %.3f, y: %.3f, z: %.3f, offset_x: %.3f, offset_z: %.3f)",
-      target_pose.header.frame_id.c_str(), target_pose.pose.position.x, target_pose.pose.position.y, target_pose.pose.position.z, x_offset, z_offset);
+    RCLCPP_INFO(node_->get_logger(),
+        "MoveArmAction: Planning to target pose in frame: %s (x: %.3f, y: %.3f, z: %.3f, offset_x: %.3f, offset_z: %.3f)",
+      target_pose.header.frame_id.c_str(), target_pose.pose.position.x, target_pose.pose.position.y,
+        target_pose.pose.position.z, x_offset, z_offset);
 
     if (!move_group_->setPoseTarget(target_pose)) {
       reportFailure(config().blackboard, "Failed to set pose target", step_idx_);

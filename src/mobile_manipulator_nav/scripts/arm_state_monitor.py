@@ -26,7 +26,7 @@ class ArmStateMonitor(Node):
             'ur5e_wrist_3_joint': 0.0
         }
         self.current_positions = {}
-        self.threshold = 0.05  # radians
+        self.threshold = 0.25  # radians
         self.get_logger().info('Arm State Monitor started. Monitoring UR5e joint states...')
 
     def joint_state_callback(self, msg):

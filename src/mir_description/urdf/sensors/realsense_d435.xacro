@@ -71,8 +71,13 @@
       <sensor name="${prefix}_sensor" type="rgbd_camera">
         <pose>0 0 0 0 0 0</pose>
         <topic>${topic}</topic>
-        <gz_frame_id>${prefix}_link</gz_frame_id>
-        <update_rate>60</update_rate>
+        <!-- gz_frame_id MUST be set or Gazebo Harmonic uses its internal scoped name       -->
+        <!-- (e.g. "mobile_manipulator/.../sensor") which does not exist in ROS TF tree.   -->
+        <!-- Set to the physical camera link so messages are stamped with the correct frame. -->
+        <!-- The TF from wrist_camera_link → wrist_camera_depth_optical_frame is provided  -->
+        <!-- by the URDF joint chain (wrist_camera_depth_optical_joint, -90°X -90°Z).       -->
+        <gz_frame_id>wrist_camera_link</gz_frame_id>
+        <update_rate>30</update_rate>
         <always_on>true</always_on>
         <visualize>true</visualize>
         <camera>

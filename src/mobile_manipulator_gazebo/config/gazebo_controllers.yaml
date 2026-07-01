@@ -31,12 +31,12 @@ joint_trajectory_controller:
     constraints:
       stopped_velocity_tolerance: 0.2
       goal_time: 0.0
-      ur5e_shoulder_pan_joint: { trajectory: 0.2, goal: 0.1 }
-      ur5e_shoulder_lift_joint: { trajectory: 0.2, goal: 0.1 }
-      ur5e_elbow_joint: { trajectory: 0.2, goal: 0.1 }
-      ur5e_wrist_1_joint: { trajectory: 0.2, goal: 0.1 }
-      ur5e_wrist_2_joint: { trajectory: 0.2, goal: 0.1 }
-      ur5e_wrist_3_joint: { trajectory: 0.2, goal: 0.1 }
+      ur5e_shoulder_pan_joint: { trajectory: 0.0, goal: 0.0 }
+      ur5e_shoulder_lift_joint: { trajectory: 0.0, goal: 0.0 }
+      ur5e_elbow_joint: { trajectory: 0.0, goal: 0.0 }
+      ur5e_wrist_1_joint: { trajectory: 0.0, goal: 0.0 }
+      ur5e_wrist_2_joint: { trajectory: 0.0, goal: 0.0 }
+      ur5e_wrist_3_joint: { trajectory: 0.0, goal: 0.0 }
 
 gripper_controller:
   ros__parameters:
@@ -54,5 +54,5 @@ gripper_controller:
     constraints:
       stopped_velocity_tolerance: 0.2
       goal_time: 0.0
-      finger_left_joint: { trajectory: 0.2, goal: 0.1 }
-      finger_right_joint: { trajectory: 0.2, goal: 0.1 }
+      finger_left_joint: { trajectory: 0.0, goal: 0.0 }
+      finger_right_joint: { trajectory: 0.0, goal: 0.0 }

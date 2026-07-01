@@ -7,6 +7,7 @@
 #include <tf2_ros/transform_listener.h>
 #include <tf2_ros/buffer.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#include <moveit_msgs/msg/robot_trajectory.hpp>
 #include <cmath>
 #include <algorithm>
 
@@ -23,10 +24,11 @@ struct VisualServoPrivate {
   int current_iteration{0};
   int max_iterations{3};
   double servo_threshold{0.01};
-  
+
   std::shared_ptr<tf2_ros::Buffer> tf_buffer;
   std::shared_ptr<tf2_ros::TransformListener> tf_listener;
 
+  // Fix 5: subscriptions live for the node's lifetime (created in constructor)
   rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr image_sub;
   rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr depth_sub;
   rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr info_sub;
@@ -35,9 +37,6 @@ struct VisualServoPrivate {
   sensor_msgs::msg::Image::SharedPtr latest_depth;
   sensor_msgs::msg::CameraInfo::SharedPtr latest_info;
 };
-
-// We will use a shared pointer to this private struct to store the state between ticks
-static std::shared_ptr<VisualServoPrivate> d_;
 
 VisualServoAction::VisualServoAction(const std::string & name, const BT::NodeConfig & config)
 : BT::StatefulActionNode(name, config)
@@ -48,29 +47,51 @@ VisualServoAction::VisualServoAction(const std::string & name, const BT::NodeCon
   }
 
   move_group_ = std::make_shared<moveit::planning_interface::MoveGroupInterface>(node_, "robot_arm");
-  
-  if (!d_) {
-    d_ = std::make_shared<VisualServoPrivate>();
-    d_->tf_buffer = std::make_shared<tf2_ros::Buffer>(node_->get_clock());
-    d_->tf_listener = std::make_shared<tf2_ros::TransformListener>(*(d_->tf_buffer));
-  }
+
+  // Fix 5: d_ is now an instance member (not static). Subscriptions are created once here
+  // in the constructor and persist for the lifetime of this BT node instance.
+  d_ = std::make_shared<VisualServoPrivate>();
+  d_->tf_buffer = std::make_shared<tf2_ros::Buffer>(node_->get_clock());
+  d_->tf_listener = std::make_shared<tf2_ros::TransformListener>(*(d_->tf_buffer));
+
+  d_->image_sub = node_->create_subscription<sensor_msgs::msg::Image>(
+    "/wrist_camera/image", 10,
+    [this](const sensor_msgs::msg::Image::SharedPtr msg) {
+      d_->latest_color = msg;
+    });
+
+  d_->depth_sub = node_->create_subscription<sensor_msgs::msg::Image>(
+    "/wrist_camera/depth_image", 10,
+    [this](const sensor_msgs::msg::Image::SharedPtr msg) {
+      d_->latest_depth = msg;
+    });
+
+  d_->info_sub = node_->create_subscription<sensor_msgs::msg::CameraInfo>(
+    "/wrist_camera/camera_info", 10,
+    [this](const sensor_msgs::msg::CameraInfo::SharedPtr msg) {
+      d_->latest_info = msg;
+    });
 }
 
 BT::PortsList VisualServoAction::providedPorts()
 {
   return {
     BT::InputPort<geometry_msgs::msg::PoseStamped>("target_pose"),
+    BT::InputPort<double>("x_offset"),
     BT::InputPort<double>("servo_threshold"),
     BT::InputPort<int>("max_iterations"),
     BT::InputPort<std::string>("phase"),
     BT::InputPort<std::string>("step"),
-    BT::InputPort<int>("step_index")
+    BT::InputPort<int>("step_index"),
+    // Servo writes the corrected arm pose here so MoveArm can descend/advance from it
+    BT::OutputPort<geometry_msgs::msg::PoseStamped>("corrected_pose")
   };
 }
 
 BT::NodeStatus VisualServoAction::onStart()
 {
   started_ = false;
+  // Fix 5: reset state only — do NOT recreate subscriptions
   d_->state = VisualServoState::WAITING_FOR_IMAGES;
   d_->current_iteration = 0;
   d_->latest_color = nullptr;
@@ -91,25 +112,6 @@ BT::NodeStatus VisualServoAction::onStart()
 
   updateBlackboardFeedback(config().blackboard, phase, step, step_idx_);
 
-  // Create subscriptions
-  d_->image_sub = node_->create_subscription<sensor_msgs::msg::Image>(
-    "/wrist_camera/image", 10,
-    [](const sensor_msgs::msg::Image::SharedPtr msg) {
-      if (d_) d_->latest_color = msg;
-    });
-
-  d_->depth_sub = node_->create_subscription<sensor_msgs::msg::Image>(
-    "/wrist_camera/depth_image", 10,
-    [](const sensor_msgs::msg::Image::SharedPtr msg) {
-      if (d_) d_->latest_depth = msg;
-    });
-
-  d_->info_sub = node_->create_subscription<sensor_msgs::msg::CameraInfo>(
-    "/wrist_camera/camera_info", 10,
-    [](const sensor_msgs::msg::CameraInfo::SharedPtr msg) {
-      if (d_) d_->latest_info = msg;
-    });
-
   RCLCPP_INFO(node_->get_logger(), "VisualServo: Started. Max iterations: %d, threshold: %f m",
     d_->max_iterations, d_->servo_threshold);
 
@@ -127,20 +129,21 @@ BT::NodeStatus VisualServoAction::onRunning()
     if (status == std::future_status::ready) {
       auto result = future_.get();
       if (result == moveit::core::MoveItErrorCode::SUCCESS) {
-        RCLCPP_INFO(node_->get_logger(), "VisualServo: Move completed successfully. Waiting for new images.");
+        RCLCPP_INFO(node_->get_logger(), "VisualServo: Move completed. Waiting for new images.");
         d_->latest_color = nullptr;
         d_->latest_depth = nullptr;
         d_->state = VisualServoState::WAITING_FOR_IMAGES;
         started_ = false;
       } else {
-        reportFailure(config().blackboard, "VisualServo: MoveGroup failed with code: " + std::to_string(result.val), step_idx_);
+        reportFailure(config().blackboard,
+          "VisualServo: MoveGroup failed with code: " + std::to_string(result.val), step_idx_);
         return BT::NodeStatus::FAILURE;
       }
     }
     return BT::NodeStatus::RUNNING;
   }
 
-  // Waiting for images state
+  // ── WAITING_FOR_IMAGES ────────────────────────────────────────────────────
   if (!d_->latest_color || !d_->latest_depth || !d_->latest_info) {
     return BT::NodeStatus::RUNNING;
   }
@@ -148,41 +151,37 @@ BT::NodeStatus VisualServoAction::onRunning()
   RCLCPP_INFO(node_->get_logger(), "VisualServo: Images received. Processing iteration %d/%d...",
     d_->current_iteration, d_->max_iterations);
 
-  // Convert color image
+  // ── Convert colour image ──────────────────────────────────────────────────
   cv_bridge::CvImagePtr cv_ptr;
   try {
     cv_ptr = cv_bridge::toCvCopy(d_->latest_color, sensor_msgs::image_encodings::BGR8);
-  } catch (cv_bridge::Exception& e) {
-    RCLCPP_ERROR(node_->get_logger(), "VisualServo: cv_bridge color exception: %s", e.what());
+  } catch (cv_bridge::Exception & e) {
+    RCLCPP_ERROR(node_->get_logger(), "VisualServo: cv_bridge colour exception: %s", e.what());
     return BT::NodeStatus::FAILURE;
   }
 
-  // HSV Mask for yellow cylinder
+  // ── HSV mask for yellow cylinder ─────────────────────────────────────────
   cv::Mat hsv;
   cv::cvtColor(cv_ptr->image, hsv, cv::COLOR_BGR2HSV);
   cv::Mat mask;
   cv::inRange(hsv, cv::Scalar(15, 80, 50), cv::Scalar(40, 255, 255), mask);
 
-  // Find contours
   std::vector<std::vector<cv::Point>> contours;
   cv::findContours(mask, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
 
   if (contours.empty()) {
-    RCLCPP_WARN(node_->get_logger(), "VisualServo: No yellow contours found!");
-    // In simulation sometimes it takes a frame to settle, we can continue waiting
+    cv::imwrite("/home/mox/.gemini/antigravity/brain/93e3932c-2e82-4a2d-931d-ed97b8590283/wrist_camera_view.png", cv_ptr->image);
+    RCLCPP_WARN(node_->get_logger(), "VisualServo: No yellow contours found! Saved image to wrist_camera_view.png");
     d_->latest_color = nullptr;
     return BT::NodeStatus::RUNNING;
   }
 
-  // Get largest contour
+  // Largest contour
   double max_area = 0.0;
   int largest_idx = -1;
   for (size_t i = 0; i < contours.size(); ++i) {
     double area = cv::contourArea(contours[i]);
-    if (area > max_area) {
-      max_area = area;
-      largest_idx = i;
-    }
+    if (area > max_area) { max_area = area; largest_idx = static_cast<int>(i); }
   }
 
   if (largest_idx == -1 || max_area < 200.0) {
@@ -191,7 +190,7 @@ BT::NodeStatus VisualServoAction::onRunning()
     return BT::NodeStatus::RUNNING;
   }
 
-  // Calculate centroid
+  // Centroid
   cv::Moments m = cv::moments(contours[largest_idx]);
   if (m.m00 == 0) {
     RCLCPP_WARN(node_->get_logger(), "VisualServo: Zero moments");
@@ -200,45 +199,44 @@ BT::NodeStatus VisualServoAction::onRunning()
   double cx = m.m10 / m.m00;
   double cy = m.m01 / m.m00;
 
-  // Convert depth image
+  // ── Convert depth image ───────────────────────────────────────────────────
   cv_bridge::CvImagePtr depth_ptr;
   try {
     depth_ptr = cv_bridge::toCvCopy(d_->latest_depth, sensor_msgs::image_encodings::TYPE_32FC1);
-  } catch (cv_bridge::Exception& e) {
+  } catch (cv_bridge::Exception & e) {
     try {
       depth_ptr = cv_bridge::toCvCopy(d_->latest_depth, d_->latest_depth->encoding);
-    } catch (cv_bridge::Exception& e2) {
+    } catch (cv_bridge::Exception & e2) {
       RCLCPP_ERROR(node_->get_logger(), "VisualServo: cv_bridge depth exception: %s", e2.what());
       return BT::NodeStatus::FAILURE;
     }
   }
 
   cv::Mat depth_img = depth_ptr->image;
-  float depth_val = 0.0;
+  float depth_val = 0.0f;
   if (depth_img.type() == CV_32FC1) {
     depth_val = depth_img.at<float>(static_cast<int>(cy), static_cast<int>(cx));
   } else if (depth_img.type() == CV_16UC1) {
     depth_val = depth_img.at<uint16_t>(static_cast<int>(cy), static_cast<int>(cx)) * 0.001f;
   }
 
-  // Neighborhood search fallback
-  if (std::isnan(depth_val) || depth_val <= 0.1 || depth_val > 5.0) {
-    float sum = 0.0;
+  // Neighbourhood search fallback
+  if (std::isnan(depth_val) || depth_val <= 0.1f || depth_val > 5.0f) {
+    float sum = 0.0f;
     int count = 0;
     for (int dy = -3; dy <= 3; ++dy) {
       for (int dx = -3; dx <= 3; ++dx) {
         int nx = static_cast<int>(cx) + dx;
         int ny = static_cast<int>(cy) + dy;
         if (nx >= 0 && nx < depth_img.cols && ny >= 0 && ny < depth_img.rows) {
-          float val = 0.0;
+          float val = 0.0f;
           if (depth_img.type() == CV_32FC1) {
             val = depth_img.at<float>(ny, nx);
           } else if (depth_img.type() == CV_16UC1) {
             val = depth_img.at<uint16_t>(ny, nx) * 0.001f;
           }
-          if (!std::isnan(val) && val > 0.1 && val < 5.0) {
-            sum += val;
-            count++;
+          if (!std::isnan(val) && val > 0.1f && val < 5.0f) {
+            sum += val; count++;
           }
         }
       }
@@ -246,14 +244,32 @@ BT::NodeStatus VisualServoAction::onRunning()
     if (count > 0) {
       depth_val = sum / count;
     } else {
-      RCLCPP_WARN(node_->get_logger(), "VisualServo: Could not determine valid depth at centroid");
+      std::stringstream ss;
+      ss << "[";
+      for (int dy = -2; dy <= 2; ++dy) {
+        ss << "\n  ";
+        for (int dx = -2; dx <= 2; ++dx) {
+          int nx = static_cast<int>(cx) + dx;
+          int ny = static_cast<int>(cy) + dy;
+          if (nx >= 0 && nx < depth_img.cols && ny >= 0 && ny < depth_img.rows) {
+            float val = (depth_img.type() == CV_32FC1) ? depth_img.at<float>(ny, nx) : depth_img.at<uint16_t>(ny, nx) * 0.001f;
+            ss << val << " ";
+          } else {
+            ss << "OOB ";
+          }
+        }
+      }
+      ss << "\n]";
+      RCLCPP_WARN(node_->get_logger(),
+        "VisualServo: Could not determine valid depth at centroid (cx=%f, cy=%f, type=%d, size=%dx%d). Neighborhood grid:%s",
+        cx, cy, depth_img.type(), depth_img.cols, depth_img.rows, ss.str().c_str());
       d_->latest_color = nullptr;
       d_->latest_depth = nullptr;
       return BT::NodeStatus::RUNNING;
     }
   }
 
-  // Intrinsics
+  // ── Intrinsics ────────────────────────────────────────────────────────────
   double fx = d_->latest_info->k[0];
   double fy = d_->latest_info->k[4];
   double cx_info = d_->latest_info->k[2];
@@ -265,87 +281,150 @@ BT::NodeStatus VisualServoAction::onRunning()
     cy_info = depth_img.rows / 2.0;
   }
 
-  // Unproject to camera coordinates
-  double x_cam = (cx - cx_info) * depth_val / fx;
-  double y_cam = (cy - cy_info) * depth_val / fy;
-  double z_cam = depth_val;
+  // Fix 4: read frame_id from camera_info
+  std::string camera_frame = d_->latest_info->header.frame_id;
+  if (camera_frame.empty()) {
+    camera_frame = "wrist_camera_link";
+  }
 
-  // Transform to tool0
-  geometry_msgs::msg::PointStamped point_cam;
-  point_cam.header.frame_id = d_->latest_color->header.frame_id;
-  point_cam.header.stamp = rclcpp::Time(0); // latest available
-  point_cam.point.x = x_cam;
-  point_cam.point.y = y_cam;
-  point_cam.point.z = z_cam;
+  // Construct the optical frame name dynamically (pixel u,v and intrinsics are defined in the optical frame)
+  std::string optical_frame = camera_frame;
+  if (optical_frame.size() > 5 && optical_frame.substr(optical_frame.size() - 5) == "_link") {
+    optical_frame = optical_frame.substr(0, optical_frame.size() - 5) + "_depth_optical_frame";
+  } else if (optical_frame.find("optical") == std::string::npos) {
+    optical_frame = optical_frame + "_depth_optical_frame";
+  }
 
-  geometry_msgs::msg::PointStamped point_tool;
+
+  // Calculate the 3D position of the object in the camera optical frame.
+  // Add 0.03 m (cylinder radius) along the optical Z axis (look direction) to target the center.
+  geometry_msgs::msg::PointStamped obj_cam;
+  obj_cam.header.frame_id = optical_frame;
+  obj_cam.header.stamp = rclcpp::Time(0);
+  obj_cam.point.x = (cx - cx_info) * depth_val / fx;
+  obj_cam.point.y = (cy - cy_info) * depth_val / fy;
+  obj_cam.point.z = depth_val + 0.03;
+
+  // Transform object 3D position into the planning frame
+  geometry_msgs::msg::PointStamped obj_planning;
   try {
-    // Wait for transform availability
-    if (d_->tf_buffer->canTransform("ur5e_tool0", point_cam.header.frame_id, tf2::TimePointZero, tf2::durationFromSec(1.0))) {
-      point_tool = d_->tf_buffer->transform(point_cam, "ur5e_tool0");
-    } else {
-      RCLCPP_WARN(node_->get_logger(), "VisualServo: TF transform from %s to ur5e_tool0 not available", point_cam.header.frame_id.c_str());
-      return BT::NodeStatus::RUNNING;
-    }
+    obj_planning = d_->tf_buffer->transform(obj_cam, move_group_->getPlanningFrame());
   } catch (const tf2::TransformException & ex) {
-    RCLCPP_ERROR(node_->get_logger(), "VisualServo TF Exception: %s", ex.what());
+    RCLCPP_ERROR(node_->get_logger(), "VisualServo TF object transform exception: %s", ex.what());
     return BT::NodeStatus::FAILURE;
   }
 
-  // We want to align tool0 center with the cylinder center.
-  // The lateral alignment correction in tool0 coordinates:
-  double dx = point_tool.point.x;
-  double dy = point_tool.point.y;
+  // Read approach x_offset from input port
+  double x_offset = 0.0;
+  getInput("x_offset", x_offset);
 
-  // Safety limits: max 15 cm shift per iteration
-  if (std::abs(dx) > 0.15) dx = std::clamp(dx, -0.15, 0.15);
-  if (std::abs(dy) > 0.15) dy = std::clamp(dy, -0.15, 0.15);
+  // Get current pose of the gripper flange (ur5e_tool0)
+  geometry_msgs::msg::PoseStamped current_pose = move_group_->getCurrentPose("ur5e_tool0");
+  geometry_msgs::msg::Pose target_pose = current_pose.pose;
 
-  double error = std::sqrt(dx*dx + dy*dy);
-  RCLCPP_INFO(node_->get_logger(), "VisualServo: Centroid in tool0: x=%f, y=%f (error: %f m)", dx, dy, error);
+  // Calculate approach direction directly from the current gripper orientation (in planning frame)
+  // to avoid gimbal lock singularities associated with RPY yaw at 90 deg pitch.
+  tf2::Quaternion q;
+  tf2::fromMsg(current_pose.pose.orientation, q);
+  tf2::Vector3 approach_dir = tf2::quatRotate(q, tf2::Vector3(0, 0, 1));
+  double yaw = std::atan2(approach_dir.y(), approach_dir.x());
+
+  // Calculate the target standoff pose: align with the object but maintain the x_offset distance along the approach axis
+  target_pose.position.x = obj_planning.point.x - x_offset * approach_dir.x();
+  target_pose.position.y = obj_planning.point.y - x_offset * approach_dir.y();
+  target_pose.position.z = obj_planning.point.z - x_offset * approach_dir.z();
+
+  // Calculate alignment error relative to the standoff pose in 3D
+  double error = std::sqrt(
+    std::pow(current_pose.pose.position.x - target_pose.position.x, 2) +
+    std::pow(current_pose.pose.position.y - target_pose.position.y, 2) +
+    std::pow(current_pose.pose.position.z - target_pose.position.z, 2));
+
+  RCLCPP_INFO(node_->get_logger(),
+    "VisualServo: Target object 3D pos=[%f, %f, %f] (yaw: %f) → Standoff target=[%f, %f, %f] → current gripper=[%f, %f, %f]",
+    obj_planning.point.x, obj_planning.point.y, obj_planning.point.z, yaw,
+    target_pose.position.x, target_pose.position.y, target_pose.position.z,
+    current_pose.pose.position.x, current_pose.pose.position.y, current_pose.pose.position.z);
+  RCLCPP_INFO(node_->get_logger(),
+    "VisualServo: 3D alignment error = %f m (frame: %s)",
+    error, move_group_->getPlanningFrame().c_str());
 
   if (error < d_->servo_threshold) {
-    RCLCPP_INFO(node_->get_logger(), "VisualServo: Aligned! error (%f) < threshold (%f)", error, d_->servo_threshold);
+    RCLCPP_INFO(node_->get_logger(),
+      "VisualServo: Aligned! error (%f) < threshold (%f)", error, d_->servo_threshold);
+    // Write absolute aligned object pose to the output port
+    geometry_msgs::msg::PoseStamped corrected;
+    corrected.header.frame_id = move_group_->getPlanningFrame();
+    corrected.header.stamp = node_->now();
+    corrected.pose.position.x = obj_planning.point.x;
+    corrected.pose.position.y = obj_planning.point.y;
+    corrected.pose.position.z = obj_planning.point.z;
+    corrected.pose.orientation = current_pose.pose.orientation;
+    setOutput("corrected_pose", corrected);
     return BT::NodeStatus::SUCCESS;
   }
 
   if (d_->current_iteration >= d_->max_iterations) {
-    RCLCPP_WARN(node_->get_logger(), "VisualServo: Max iterations reached without target alignment. Continuing with current alignment.");
+    RCLCPP_WARN(node_->get_logger(),
+      "VisualServo: Max iterations reached. Writing best-effort corrected pose.");
+    // Write absolute aligned object pose to the output port
+    geometry_msgs::msg::PoseStamped corrected;
+    corrected.header.frame_id = move_group_->getPlanningFrame();
+    corrected.header.stamp = node_->now();
+    corrected.pose.position.x = obj_planning.point.x;
+    corrected.pose.position.y = obj_planning.point.y;
+    corrected.pose.position.z = obj_planning.point.z;
+    corrected.pose.orientation = current_pose.pose.orientation;
+    setOutput("corrected_pose", corrected);
     return BT::NodeStatus::SUCCESS;
   }
 
-  // Transform translation to planning frame
-  geometry_msgs::msg::Vector3Stamped delta_tool;
-  delta_tool.header.frame_id = "ur5e_tool0";
-  delta_tool.header.stamp = rclcpp::Time(0);
-  delta_tool.vector.x = dx;
-  delta_tool.vector.y = dy;
-  delta_tool.vector.z = 0.0;
-
-  geometry_msgs::msg::Vector3Stamped delta_planning;
-  try {
-    delta_planning = d_->tf_buffer->transform(delta_tool, move_group_->getPlanningFrame());
-  } catch (const tf2::TransformException & ex) {
-    RCLCPP_ERROR(node_->get_logger(), "VisualServo TF delta exception: %s", ex.what());
-    return BT::NodeStatus::FAILURE;
+  // Clamp the correction step magnitude to max 15 cm to prevent large unexpected motions
+  double dx = target_pose.position.x - current_pose.pose.position.x;
+  double dy = target_pose.position.y - current_pose.pose.position.y;
+  double dz = target_pose.position.z - current_pose.pose.position.z;
+  double dist = std::sqrt(dx*dx + dy*dy + dz*dz);
+  if (dist > 0.15) {
+    dx = (dx / dist) * 0.15;
+    dy = (dy / dist) * 0.15;
+    dz = (dz / dist) * 0.15;
+    target_pose.position.x = current_pose.pose.position.x + dx;
+    target_pose.position.y = current_pose.pose.position.y + dy;
+    target_pose.position.z = current_pose.pose.position.z + dz;
   }
 
-  // Calculate new target pose
-  geometry_msgs::msg::PoseStamped current_pose = move_group_->getCurrentPose("ur5e_tool0");
-  geometry_msgs::msg::PoseStamped target_pose = current_pose;
-  target_pose.pose.position.x += delta_planning.vector.x;
-  target_pose.pose.position.y += delta_planning.vector.y;
-  target_pose.pose.position.z += delta_planning.vector.z;
+  RCLCPP_INFO(node_->get_logger(),
+    "VisualServo: Planning Cartesian correction step to target=[%.4f, %.4f, %.4f] (offset: %.4f, %.4f, %.4f)",
+    target_pose.position.x, target_pose.position.y, target_pose.position.z, dx, dy, dz);
 
-  RCLCPP_INFO(node_->get_logger(), "VisualServo: Moving arm to corrected pose: x=%f, y=%f, z=%f",
-    target_pose.pose.position.x, target_pose.pose.position.y, target_pose.pose.position.z);
+  std::vector<geometry_msgs::msg::Pose> waypoints;
+  waypoints.push_back(target_pose);
 
-  move_group_->setPoseTarget(target_pose);
+  moveit_msgs::msg::RobotTrajectory trajectory;
+  const double eef_step = 0.005;   // 5 mm interpolation step
+  const double jump_thresh = 1.0;  // Check for joint jumps to avoid flips
+  double fraction = move_group_->computeCartesianPath(
+    waypoints, eef_step, jump_thresh, trajectory);
 
-  future_ = std::async(std::launch::async, [this]() {
-    move_group_->setMaxVelocityScalingFactor(0.2); // safe slow speed for alignment
-    move_group_->setMaxAccelerationScalingFactor(0.2);
-    return move_group_->move();
+  if (fraction < 0.8) {
+    // Less than 80% of the path is reachable — skip this iteration
+    RCLCPP_WARN(node_->get_logger(),
+      "VisualServo: Cartesian path only %.1f%% complete (collision near target). "
+      "Skipping this correction.", fraction * 100.0);
+    d_->latest_color = nullptr;
+    d_->latest_depth = nullptr;
+    d_->current_iteration++;
+    return BT::NodeStatus::RUNNING;
+  }
+
+  // Execute the Cartesian plan asynchronously
+  moveit::planning_interface::MoveGroupInterface::Plan plan;
+  plan.trajectory = trajectory;
+
+  future_ = std::async(std::launch::async, [this, plan]() mutable {
+    move_group_->setMaxVelocityScalingFactor(0.15);
+    move_group_->setMaxAccelerationScalingFactor(0.15);
+    return move_group_->execute(plan);
   });
 
   started_ = true;
@@ -359,11 +438,11 @@ void VisualServoAction::onHalted()
 {
   move_group_->stop();
   started_ = false;
-  
-  // Cleanup subscriptions to prevent leak
-  d_->image_sub.reset();
-  d_->depth_sub.reset();
-  d_->info_sub.reset();
+  // Fix 5: subscriptions are NOT destroyed here; they live for the node's lifetime.
+  // Only reset per-tick data.
+  d_->latest_color = nullptr;
+  d_->latest_depth = nullptr;
+  d_->latest_info = nullptr;
 }
 
 }  // namespace pick_place_orchestrator

@@ -89,9 +89,9 @@ def generate_launch_description():
     )
 
     # Delay mission trigger to allow full system startup
-    # Wait 15 seconds after orchestrator starts (which itself waits 10s after optimizer_demo)
+    # Wait 70 seconds after orchestrator starts (which itself waits 10s after optimizer_demo)
     delayed_mission_trigger = TimerAction(
-        period=40.0,
+        period=80.0,
         actions=[mission_trigger_node]
     )
 

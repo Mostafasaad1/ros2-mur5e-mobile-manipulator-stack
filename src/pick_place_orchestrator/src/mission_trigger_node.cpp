@@ -35,9 +35,9 @@ public:
     double place_y = this->get_parameter("place_y").as_double();
     double place_z = this->get_parameter("place_z").as_double();
 
-    RCLCPP_INFO(this->get_logger(), 
+    RCLCPP_INFO(this->get_logger(),
       "Pick pose:  (%.2f, %.2f, %.2f)", pick_x, pick_y, pick_z);
-    RCLCPP_INFO(this->get_logger(), 
+    RCLCPP_INFO(this->get_logger(),
       "Place pose: (%.2f, %.2f, %.2f)", place_x, place_y, place_z);
 
     // Create action client
@@ -45,11 +45,11 @@ public:
       this, "pick_place_mission");
 
     // Wait for action server
-    RCLCPP_INFO(this->get_logger(), 
+    RCLCPP_INFO(this->get_logger(),
       "Waiting for pick_place_mission action server...");
-    
+
     if (!action_client_->wait_for_action_server(30s)) {
-      RCLCPP_ERROR(this->get_logger(), 
+      RCLCPP_ERROR(this->get_logger(),
         "Action server not available after 30 seconds. Exiting.");
       rclcpp::shutdown();
       return;
@@ -83,11 +83,11 @@ public:
     goal_msg.place_pose.pose.orientation.w = 0.0;
 
     // Send goal
-    RCLCPP_INFO(this->get_logger(), 
+    RCLCPP_INFO(this->get_logger(),
       "Sending pick and place mission goal...");
 
     auto send_goal_options = rclcpp_action::Client<PickPlaceMission>::SendGoalOptions();
-    
+
     send_goal_options.goal_response_callback =
       [this](std::shared_ptr<GoalHandlePickPlace> goal_handle) {
         if (!goal_handle) {
@@ -99,9 +99,9 @@ public:
 
     send_goal_options.feedback_callback =
       [this](
-        std::shared_ptr<GoalHandlePickPlace>,
-        const std::shared_ptr<const PickPlaceMission::Feedback> feedback) {
-        RCLCPP_INFO(this->get_logger(), 
+      std::shared_ptr<GoalHandlePickPlace>,
+      const std::shared_ptr<const PickPlaceMission::Feedback> feedback) {
+        RCLCPP_INFO(this->get_logger(),
           "Feedback - Phase: %s | Step: %s | Index: %d",
           feedback->current_phase.c_str(),
           feedback->current_step.c_str(),
@@ -112,11 +112,11 @@ public:
       [this](const GoalHandlePickPlace::WrappedResult & result) {
         switch (result.code) {
           case rclcpp_action::ResultCode::SUCCEEDED:
-            RCLCPP_INFO(this->get_logger(), 
+            RCLCPP_INFO(this->get_logger(),
               "✓ Mission SUCCEEDED! Object successfully moved from pick to place table.");
             break;
           case rclcpp_action::ResultCode::ABORTED:
-            RCLCPP_ERROR(this->get_logger(), 
+            RCLCPP_ERROR(this->get_logger(),
               "✗ Mission ABORTED. Reason: %s | Failed at step: %d",
               result.result->failure_reason.c_str(),
               result.result->failed_step_index);
@@ -128,7 +128,7 @@ public:
             RCLCPP_ERROR(this->get_logger(), "Mission completed with UNKNOWN result code.");
             break;
         }
-        
+
         // Shutdown after result
         RCLCPP_INFO(this->get_logger(), "Mission trigger node shutting down.");
         rclcpp::shutdown();

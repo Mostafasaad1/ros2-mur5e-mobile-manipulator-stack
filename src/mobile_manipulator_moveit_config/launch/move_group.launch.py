@@ -60,7 +60,12 @@ def generate_launch_description():
         output='screen',
         parameters=[
             moveit_configs.to_dict(),
-            {'use_sim_time': LaunchConfiguration('use_sim_time')},
+            {
+                'use_sim_time': LaunchConfiguration('use_sim_time'),
+                'trajectory_execution.allowed_execution_duration_scaling': 10.0,
+                'trajectory_execution.allowed_goal_duration_margin': 10.0,
+                'trajectory_execution.execution_duration_monitoring': False,
+            },
         ],
     )
 

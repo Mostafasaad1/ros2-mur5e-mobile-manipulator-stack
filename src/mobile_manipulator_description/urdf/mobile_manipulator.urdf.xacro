@@ -130,12 +130,17 @@
 
   <!-- Wrist depth camera for visual servoing -->
   <xacro:include filename="$(find mir_description)/urdf/sensors/realsense_d435.xacro" />
+  <!--
+    Camera mount: offset 6 cm in +X (clear of fingers which spread in ±Y),
+    and 6 cm back behind the flange face (-Z of tool0, away from fingertips).
+    rpy="0 -1.5708 0" pitches -90° around Y so the camera +X axis (optical axis
+    in Gazebo convention) aligns with tool0 +Z (approach direction → toward object).
+  -->
   <xacro:realsense_d435
     prefix="wrist_camera"
-    parent="ur5e_wrist_3_link"
+    parent="ur5e_tool0"
     topic="wrist_camera"
-    xyz="0.05 -0.07 0.0"
+    xyz="-0.06 0.0 -0.06"
     rpy="0 -1.5708 0" />
 
 </robot>
-

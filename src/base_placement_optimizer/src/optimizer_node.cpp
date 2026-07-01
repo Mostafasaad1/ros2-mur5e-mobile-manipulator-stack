@@ -195,6 +195,8 @@ void BasePlacementOptimizerNode::execute(
   };
   std::vector<Candidate> valid_candidates;
 
+  planning_scene_monitor::LockedPlanningSceneRO planning_scene(planning_scene_monitor_);
+
   for (int i = 0; i < angular_samples_; ++i) {
     if (goal_handle->is_canceling()) {
       result->success = false;
@@ -226,9 +228,8 @@ void BasePlacementOptimizerNode::execute(
       Eigen::Isometry3d T_base_obj = T_map_base.inverse() * T_map_obj;
 
       // Run IK
-      auto planning_scene = planning_scene_monitor_->getPlanningScene();
       moveit::core::GroupStateValidityCallbackFn collision_callback =
-        [planning_scene](moveit::core::RobotState * rs, const moveit::core::JointModelGroup * jmg,
+        [&planning_scene](moveit::core::RobotState * rs, const moveit::core::JointModelGroup * jmg,
         const double * joint_group_variable_values) {
           rs->setJointGroupPositions(jmg, joint_group_variable_values);
           rs->update();
