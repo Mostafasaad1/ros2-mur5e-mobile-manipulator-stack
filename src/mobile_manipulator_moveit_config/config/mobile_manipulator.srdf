@@ -105,6 +105,12 @@
     <disable_collisions link1="finger_left" link2="finger_right" reason="Default" />
     <disable_collisions link1="ur5e_wrist_3_link" link2="finger_left" reason="Never" />
     <disable_collisions link1="ur5e_wrist_3_link" link2="finger_right" reason="Never" />
+    <disable_collisions link1="ur5e_forearm_link" link2="finger_left" reason="Never" />
+    <disable_collisions link1="ur5e_forearm_link" link2="finger_right" reason="Never" />
+    <disable_collisions link1="ur5e_wrist_1_link" link2="finger_left" reason="Never" />
+    <disable_collisions link1="ur5e_wrist_1_link" link2="finger_right" reason="Never" />
+    <disable_collisions link1="ur5e_wrist_2_link" link2="finger_left" reason="Never" />
+    <disable_collisions link1="ur5e_wrist_2_link" link2="finger_right" reason="Never" />
 
     <!-- Wrist Camera Collision Exclusions (camera parent is ur5e_tool0) -->
     <disable_collisions link1="ur5e_tool0"        link2="wrist_camera_link" reason="Adjacent" />
@@ -112,4 +118,7 @@
     <disable_collisions link1="ur5e_wrist_3_link" link2="wrist_camera_link" reason="Never" />
     <disable_collisions link1="finger_left"       link2="wrist_camera_link" reason="Never" />
     <disable_collisions link1="finger_right"      link2="wrist_camera_link" reason="Never" />
+    <disable_collisions link1="ur5e_forearm_link" link2="wrist_camera_link" reason="Never" />
+    <disable_collisions link1="ur5e_wrist_1_link" link2="wrist_camera_link" reason="Never" />
+    <disable_collisions link1="ur5e_wrist_2_link" link2="wrist_camera_link" reason="Never" />
 </robot>

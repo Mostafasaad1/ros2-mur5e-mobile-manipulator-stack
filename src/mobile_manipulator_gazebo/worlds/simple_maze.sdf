@@ -320,29 +320,64 @@
       </link>
     </model>
 
-    <!-- Table 2 (Place Location) -->
+    <!-- Table 2 (Place Location): top-open container -->
     <model name="place_table">
       <static>true</static>
       <pose>-3.0 -3.0 0.4 0 0 0</pose>
       <link name="link">
-        <collision name="collision">
-          <geometry>
-            <box>
-              <size>1.2 0.8 0.8</size>
-            </box>
-          </geometry>
+        <!-- Bottom base block: height 0.5m (z_world from 0.0 to 0.5) -->
+        <collision name="base_col">
+          <pose>0 0 -0.15 0 0 0</pose>
+          <geometry><box><size>1.2 0.8 0.5</size></box></geometry>
         </collision>
-        <visual name="visual">
-          <geometry>
-            <box>
-              <size>1.2 0.8 0.8</size>
-            </box>
-          </geometry>
-          <material>
-            <ambient>0.7 0.4 0.1 1</ambient>
-            <diffuse>0.7 0.4 0.1 1</diffuse>
-            <specular>0.5 0.5 0.5 1</specular>
-          </material>
+        <visual name="base_vis">
+          <pose>0 0 -0.15 0 0 0</pose>
+          <geometry><box><size>1.2 0.8 0.5</size></box></geometry>
+          <material><ambient>0.7 0.4 0.1 1</ambient><diffuse>0.7 0.4 0.1 1</diffuse><specular>0.5 0.5 0.5 1</specular></material>
+        </visual>
+
+        <!-- North wall: thickness 0.02m (y_world from -2.62 to -2.60, height 0.30m) -->
+        <collision name="north_wall_col">
+          <pose>0 0.39 0.25 0 0 0</pose>
+          <geometry><box><size>1.2 0.02 0.3</size></box></geometry>
+        </collision>
+        <visual name="north_wall_vis">
+          <pose>0 0.39 0.25 0 0 0</pose>
+          <geometry><box><size>1.2 0.02 0.3</size></box></geometry>
+          <material><ambient>0.7 0.4 0.1 1</ambient><diffuse>0.7 0.4 0.1 1</diffuse><specular>0.5 0.5 0.5 1</specular></material>
+        </visual>
+
+        <!-- South wall: thickness 0.02m (y_world from -3.40 to -3.38, height 0.30m) -->
+        <collision name="south_wall_col">
+          <pose>0 -0.39 0.25 0 0 0</pose>
+          <geometry><box><size>1.2 0.02 0.3</size></box></geometry>
+        </collision>
+        <visual name="south_wall_vis">
+          <pose>0 -0.39 0.25 0 0 0</pose>
+          <geometry><box><size>1.2 0.02 0.3</size></box></geometry>
+          <material><ambient>0.7 0.4 0.1 1</ambient><diffuse>0.7 0.4 0.1 1</diffuse><specular>0.5 0.5 0.5 1</specular></material>
+        </visual>
+
+        <!-- East wall: thickness 0.02m (x_world from -2.42 to -2.40, height 0.30m) -->
+        <collision name="east_wall_col">
+          <pose>0.59 0 0.25 0 0 0</pose>
+          <geometry><box><size>0.02 0.76 0.3</size></box></geometry>
+        </collision>
+        <visual name="east_wall_vis">
+          <pose>0.59 0 0.25 0 0 0</pose>
+          <geometry><box><size>0.02 0.76 0.3</size></box></geometry>
+          <material><ambient>0.7 0.4 0.1 1</ambient><diffuse>0.7 0.4 0.1 1</diffuse><specular>0.5 0.5 0.5 1</specular></material>
+        </visual>
+
+        <!-- West wall: thickness 0.02m (x_world from -3.60 to -3.58, height 0.30m) -->
+        <collision name="west_wall_col">
+          <pose>-0.59 0 0.25 0 0 0</pose>
+          <geometry><box><size>0.02 0.76 0.3</size></box></geometry>
+        </collision>
+        <visual name="west_wall_vis">
+          <pose>-0.59 0 0.25 0 0 0</pose>
+          <geometry><box><size>0.02 0.76 0.3</size></box></geometry>
+          <material><ambient>0.7 0.4 0.1 1</ambient><diffuse>0.7 0.4 0.1 1</diffuse><specular>0.5 0.5 0.5 1</specular></material>
         </visual>
       </link>
     </model>

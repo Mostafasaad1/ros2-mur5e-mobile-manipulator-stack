@@ -136,9 +136,9 @@
                            step="DETACH_PAYLOAD"
                            step_index="11" />
 
-            <!-- Retract horizontally -->
+            <!-- Retract vertically to clear container walls -->
             <MoveArm target_pose="{place_pose}"
-                     x_offset="0.15"
+                     z_offset="0.20"
                      phase="PLACE_PHASE"
                      step="EXECUTE_PLACE"
                      step_index="10" />
