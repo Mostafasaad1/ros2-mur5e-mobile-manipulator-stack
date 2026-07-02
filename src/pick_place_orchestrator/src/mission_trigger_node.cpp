@@ -23,11 +23,15 @@ public:
     // Object in world file at x=4.5, y=4.0, z=1.20 (pick table)
     // Approach at z=1.40m to avoid wrist collision with table during visual servo
     // Visual servo will detect actual object position
+    // Robot base 2.5m south of pick table for maximum clearance from costmap
+    // UR5e has ~0.85m reach - needs optimizer to bring base closer during pick
     this->declare_parameter("pick_x", 4.5);
-    this->declare_parameter("pick_y", 4.0);
+    this->declare_parameter("pick_y", 1.5);  // 2.5m away from table at y=4.0
     this->declare_parameter("pick_z", 1.40);  // Raised approach height for wrist clearance
+    // Place: robot base far from place target for clearance
+    // Both accessible via wide door at Y ∈ [2.5, 5.5]
     this->declare_parameter("place_x", 4.5);
-    this->declare_parameter("place_y", -4.0);
+    this->declare_parameter("place_y", -0.5);  // 2.5m away from target at y=2.0
     this->declare_parameter("place_z", 1.30);
 
     // Get parameters
@@ -84,6 +88,17 @@ public:
     goal_msg.place_pose.pose.orientation.y = 0.0;
     goal_msg.place_pose.pose.orientation.z = 0.0;
     goal_msg.place_pose.pose.orientation.w = 1.0;
+
+    // Retreat pose - midpoint in open space to clear costmap collision
+    goal_msg.retreat_pose.header.frame_id = "map";
+    goal_msg.retreat_pose.header.stamp = this->now();
+    goal_msg.retreat_pose.pose.position.x = 4.5;
+    goal_msg.retreat_pose.pose.position.y = 2.0;  // Midway between pick (3.0) and place (1.0)
+    goal_msg.retreat_pose.pose.position.z = 0.0;  // Ground level
+    goal_msg.retreat_pose.pose.orientation.x = 0.0;
+    goal_msg.retreat_pose.pose.orientation.y = 0.0;
+    goal_msg.retreat_pose.pose.orientation.z = 0.0;
+    goal_msg.retreat_pose.pose.orientation.w = 1.0;
 
     // Send goal
     RCLCPP_INFO(this->get_logger(),

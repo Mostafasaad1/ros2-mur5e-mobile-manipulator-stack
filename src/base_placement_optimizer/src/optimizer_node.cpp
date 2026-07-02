@@ -14,6 +14,7 @@
 
 #include <cmath>
 #include <functional>
+#include <limits>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -36,14 +37,27 @@ BasePlacementOptimizerNode::BasePlacementOptimizerNode(const rclcpp::NodeOptions
   map_frame_ = this->declare_parameter("map_frame", "map");
   planning_group_ = this->declare_parameter("planning_group", "robot_arm");
   costmap_topic_ = this->declare_parameter("costmap_topic", "/global_costmap/costmap");
-  // reach_radius: distance from target object to robot base center.
-  // Front face of robot is at cx + 0.495m. For the front to clear the table
-  // lethal zone (table_edge = object_x - 0.3), min r ≈ 0.80m.
-  // Sweep ±0.20 gives [0.60, 1.00m], with first PASS at r≈0.80m.
+  // reach_radius: nominal distance from target object to robot base center.
+  // The sweep now covers [reach_radius-0.20, reach_radius+0.60] so that
+  // IK solutions at larger stand-offs (needed to clear table inflation) are
+  // also considered.
   reach_radius_ = this->declare_parameter("reach_radius", 0.80);
   angular_samples_ = this->declare_parameter("angular_samples", 16);
   ik_timeout_ = this->declare_parameter("ik_timeout", 0.010);
   alpha_ = this->declare_parameter("alpha", 0.5);
+  // max_nav_distance: candidates farther than this from the robot's current
+  // pose are discarded.  12 m is safely within any of our test maps while
+  // still allowing cross-room navigation (~7 m pick-to-place distance).
+  max_nav_distance_ = this->declare_parameter("max_nav_distance", 12.0);
+  robot_base_frame_ = this->declare_parameter("robot_base_frame", "base_footprint");
+  // target_clearance_radius: minimum XY distance a candidate base pose must
+  // maintain from the TARGET OBJECT in the map frame.  This guards against
+  // choosing a pose that will fall inside the costmap inflation zone once
+  // the table becomes visible to the LIDAR (table is often beyond sensor
+  // range during optimization).  Formula:
+  //   table_half_width (≈0.25) + robot_front_length (0.495) + safety_margin (0.05) ≈ 0.80
+  // Default 0.80 m ensures no physical collision while remaining within reach.
+  target_clearance_radius_ = this->declare_parameter("target_clearance_radius", 0.80);
 
   // Initialize TF
   tf_buffer_ = std::make_shared<tf2_ros::Buffer>(this->get_clock());
@@ -209,12 +223,27 @@ void BasePlacementOptimizerNode::execute(
     // The robot should face the object
     double ctheta = angle + M_PI; // point inwards
 
-    // Sweep from reach_radius_ - 0.20 to reach_radius_ + 0.20
-    for (double r = reach_radius_ - 0.20; r <= reach_radius_ + 0.20 + 1e-4; r += 0.04) {
+    // Sweep from target_clearance_radius_ up to reach_radius_ + 0.10.
+    // The target_clearance_radius_ ensures we do not choose a pose that is
+    // physically in collision with the table. The upper limit ensures we
+    // stay within kinematic reach of the arm.
+    double r_min = target_clearance_radius_;
+    double r_max = std::max(r_min + 0.04, reach_radius_ + 0.10);
+    for (double r = r_min; r <= r_max + 1e-4; r += 0.02) {
       double cx = map_target_pose.pose.position.x + r * std::cos(angle);
       double cy = map_target_pose.pose.position.y + r * std::sin(angle);
 
-      // US2: Obstacle Check (Full footprint check)
+      // Geometric clearance guard: reject candidates too close to the target
+      // object XY.  The table is often outside LIDAR range when the optimizer
+      // runs, so the costmap cannot be relied upon for this check.
+      double dist_to_target = std::hypot(
+        cx - map_target_pose.pose.position.x,
+        cy - map_target_pose.pose.position.y);
+      if (dist_to_target < target_clearance_radius_) {
+        continue;
+      }
+
+      // US2: Obstacle Check (Full footprint check against live costmap)
       if (!is_candidate_safe(cx, cy, ctheta, costmap_snapshot)) {
         continue;
       }
@@ -240,6 +269,32 @@ void BasePlacementOptimizerNode::execute(
           collision_callback);
 
       if (ik_valid) {
+        // Guard: reject candidates that are farther from the robot's current
+        // pose than max_nav_distance_.  This prevents NavFn from receiving a
+        // goal that lies outside the navigable/mapped region of the costmap.
+        double nav_dist_to_candidate = std::numeric_limits<double>::max();
+        try {
+          auto tf_stamped = tf_buffer_->lookupTransform(
+            map_frame_, robot_base_frame_,
+            tf2::TimePointZero, tf2::durationFromSec(0.1));
+          double rx = tf_stamped.transform.translation.x;
+          double ry = tf_stamped.transform.translation.y;
+          nav_dist_to_candidate = std::hypot(cx - rx, cy - ry);
+        } catch (const tf2::TransformException & ex) {
+          RCLCPP_WARN_THROTTLE(
+            get_logger(), *get_clock(), 2000,
+            "BasePlacementOptimizer: TF lookup for max_nav_distance guard failed: %s", ex.what());
+          // If TF is unavailable, allow the candidate through rather than
+          // discarding potentially good solutions.
+        }
+
+        if (nav_dist_to_candidate > max_nav_distance_) {
+          RCLCPP_DEBUG(get_logger(),
+            "Pruning candidate (%.2f, %.2f): %.2f m > max_nav_distance %.2f m",
+            cx, cy, nav_dist_to_candidate, max_nav_distance_);
+          continue;
+        }
+
         double manipulability = compute_manipulability(robot_state, joint_model_group);
         double distance = std::hypot(cx - map_target_pose.pose.position.x,
             cy - map_target_pose.pose.position.y);

@@ -34,6 +34,22 @@
   <gazebo reference="ur5e_wrist_2_link"><self_collide>false</self_collide></gazebo>
   <gazebo reference="ur5e_wrist_3_link"><self_collide>false</self_collide></gazebo>
 
+  <!-- High friction on gripper fingers to prevent object slipping -->
+  <gazebo reference="finger_left">
+    <mu1>100.0</mu1>
+    <mu2>100.0</mu2>
+    <minDepth>0.001</minDepth>
+    <kp>1000000.0</kp>
+    <kd>100.0</kd>
+  </gazebo>
+  <gazebo reference="finger_right">
+    <mu1>100.0</mu1>
+    <mu2>100.0</mu2>
+    <minDepth>0.001</minDepth>
+    <kp>1000000.0</kp>
+    <kd>100.0</kd>
+  </gazebo>
+
   <!-- ros2_control configuration for Gazebo Harmonic -->
   <!-- Native Gazebo DiffDrive plugin (force/torque based - works with DART physics) -->
   <gazebo>

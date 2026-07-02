@@ -87,6 +87,15 @@ private:
   int angular_samples_;
   double ik_timeout_;
   double alpha_;
+  // Maximum distance (m) from the robot's current pose a candidate may be.
+  // Candidates beyond this threshold are pruned before scoring to prevent
+  // the planner from receiving goals outside the navigable map region.
+  double max_nav_distance_;
+  std::string robot_base_frame_;
+  // Minimum XY distance a candidate must have from the target object.
+  // Enforces clearance from the table inflation zone even when the table
+  // is not yet visible in the costmap.
+  double target_clearance_radius_;
 
 };
 

@@ -1,6 +1,7 @@
 # Goal definition
 geometry_msgs/PoseStamped pick_pose
 geometry_msgs/PoseStamped place_pose
+geometry_msgs/PoseStamped retreat_pose
 ---
 # Result definition
 bool success
