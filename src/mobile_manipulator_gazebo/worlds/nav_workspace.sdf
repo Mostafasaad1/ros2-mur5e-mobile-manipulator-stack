@@ -217,20 +217,20 @@
       </link>
     </model>
 
-    <!-- Workpiece on pick table -->
+    <!-- Workpiece on pick table - RAISED to 1.20m for arm reachability at extended reach -->
     <model name="workpiece">
       <static>false</static>
-      <pose>4.5 4.0 0.68 0 0 0</pose>
+      <pose>4.5 4.0 1.20 0 0 0</pose>
       <link name="link">
         <inertial><mass>0.3</mass>
           <inertia><ixx>0.0002</ixx><ixy>0</ixy><ixz>0</ixz>
                    <iyy>0.0002</iyy><iyz>0</iyz><izz>0.0002</izz></inertia>
         </inertial>
         <collision name="col">
-          <geometry><cylinder><radius>0.03</radius><length>0.16</length></cylinder></geometry>
+          <geometry><cylinder><radius>0.03</radius><length>0.6</length></cylinder></geometry>
         </collision>
         <visual name="vis">
-          <geometry><cylinder><radius>0.03</radius><length>0.16</length></cylinder></geometry>
+          <geometry><cylinder><radius>0.03</radius><length>0.6</length></cylinder></geometry>
           <material><ambient>1.0 0.8 0.0 1</ambient><diffuse>1.0 0.8 0.0 1</diffuse></material>
         </visual>
       </link>

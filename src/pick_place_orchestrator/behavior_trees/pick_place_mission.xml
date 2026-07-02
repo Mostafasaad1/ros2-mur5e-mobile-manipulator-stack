@@ -29,15 +29,15 @@
                         step="EXECUTE_PICK"
                         step_index="4" />
                         
-        <!-- Approach horizontally first with larger standoff for camera visibility -->
+        <!-- Approach with 20cm standoff + 10cm elevation - avoids wrist hitting table -->
         <MoveArm target_pose="{pick_pose}"
                  x_offset="0.20"
+                 z_offset="0.10"
                  phase="PICK_PHASE"
                  step="EXECUTE_PICK"
                  step_index="4" />
 
-        <!-- Perform visual servo correction while maintaining 20 cm standoff distance
-             At this distance, camera can see full object contour for reliable detection -->
+        <!-- Visual servo maintains 20cm standoff for camera view -->
         <VisualServo target_pose="{pick_pose}"
                      x_offset="0.20"
                      corrected_pose="{corrected_pick_pose}"
@@ -47,9 +47,9 @@
                      step="EXECUTE_PICK"
                      step_index="4" />
                         
-        <!-- Advance horizontally to grasp the object from the servo-corrected pose
-             This moves forward blindly from the aligned position -->
+        <!-- Advance to grasp - small 3cm standoff so fingers wrap around object, not push it -->
         <MoveArm target_pose="{corrected_pick_pose}"
+                 x_offset="0.03"
                  phase="PICK_PHASE"
                  step="EXECUTE_PICK"
                  step_index="4" />

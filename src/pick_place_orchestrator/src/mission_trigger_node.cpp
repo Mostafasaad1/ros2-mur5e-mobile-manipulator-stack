@@ -20,12 +20,15 @@ public:
     RCLCPP_INFO(this->get_logger(), "Mission Trigger Node starting...");
 
     // Declare parameters for pick and place poses
-    this->declare_parameter("pick_x", 5.0);
+    // Object in world file at x=4.5, y=4.0, z=1.20 (pick table)
+    // Approach at z=1.40m to avoid wrist collision with table during visual servo
+    // Visual servo will detect actual object position
+    this->declare_parameter("pick_x", 4.5);
     this->declare_parameter("pick_y", 4.0);
-    this->declare_parameter("pick_z", 0.88);
-    this->declare_parameter("place_x", 5.0);
+    this->declare_parameter("pick_z", 1.40);  // Raised approach height for wrist clearance
+    this->declare_parameter("place_x", 4.5);
     this->declare_parameter("place_y", -4.0);
-    this->declare_parameter("place_z", 0.88);
+    this->declare_parameter("place_z", 1.30);
 
     // Get parameters
     double pick_x = this->get_parameter("pick_x").as_double();
@@ -66,10 +69,10 @@ public:
     goal_msg.pick_pose.pose.position.x = pick_x;
     goal_msg.pick_pose.pose.position.y = pick_y;
     goal_msg.pick_pose.pose.position.z = pick_z;
-    goal_msg.pick_pose.pose.orientation.x = 1.0;  // Gripper pointing down
+    goal_msg.pick_pose.pose.orientation.x = 0.0;  // Gripper pointing down, wrist up
     goal_msg.pick_pose.pose.orientation.y = 0.0;
     goal_msg.pick_pose.pose.orientation.z = 0.0;
-    goal_msg.pick_pose.pose.orientation.w = 0.0;
+    goal_msg.pick_pose.pose.orientation.w = 1.0;
 
     // Place pose
     goal_msg.place_pose.header.frame_id = "map";
@@ -77,10 +80,10 @@ public:
     goal_msg.place_pose.pose.position.x = place_x;
     goal_msg.place_pose.pose.position.y = place_y;
     goal_msg.place_pose.pose.position.z = place_z;
-    goal_msg.place_pose.pose.orientation.x = 1.0;  // Gripper pointing down
+    goal_msg.place_pose.pose.orientation.x = 0.0;  // Gripper pointing down, wrist up
     goal_msg.place_pose.pose.orientation.y = 0.0;
     goal_msg.place_pose.pose.orientation.z = 0.0;
-    goal_msg.place_pose.pose.orientation.w = 0.0;
+    goal_msg.place_pose.pose.orientation.w = 1.0;
 
     // Send goal
     RCLCPP_INFO(this->get_logger(),

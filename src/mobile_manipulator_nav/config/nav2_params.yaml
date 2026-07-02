@@ -179,9 +179,9 @@ global_costmap:
           obstacle_min_range: 0.0
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        # Large radius + gentle decay → narrow passages stay expensive, wide ones are cheap.
-        # Robot half-diagonal ≈ 0.60 m, so 0.65 m gives 5 cm extra clearance.
-        inflation_radius: 0.65
+        # Balanced inflation for safe table approach during manipulation
+        # Robot half-diagonal ≈ 0.60 m, 0.45 m provides safe clearance
+        inflation_radius: 0.45
         cost_scaling_factor: 2.0
         enabled: True
 
@@ -216,7 +216,7 @@ local_costmap:
           obstacle_min_range: 0.0
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        inflation_radius: 0.65
+        inflation_radius: 0.45
         cost_scaling_factor: 2.0
         enabled: True
 

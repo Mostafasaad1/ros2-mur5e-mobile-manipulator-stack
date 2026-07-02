@@ -328,11 +328,16 @@ BT::NodeStatus VisualServoAction::onRunning()
   tf2::fromMsg(current_pose.pose.orientation, q);
   tf2::Vector3 approach_dir = tf2::quatRotate(q, tf2::Vector3(0, 0, 1));
   double yaw = std::atan2(approach_dir.y(), approach_dir.x());
+  
+  RCLCPP_WARN(node_->get_logger(),
+    "VisualServo DEBUG: approach_dir = [%.3f, %.3f, %.3f] | Gripper pointing sideways (Y-axis)",
+    approach_dir.x(), approach_dir.y(), approach_dir.z());
 
-  // Calculate the target standoff pose: align with the object but maintain the x_offset distance along the approach axis
+  // Calculate the target standoff pose: align XY with object, but MAINTAIN current Z height
+  // approach_dir.z ≈ 0 (gripper horizontal), so using it causes upward drift as camera sees object higher in frame
   target_pose.position.x = obj_planning.point.x - x_offset * approach_dir.x();
   target_pose.position.y = obj_planning.point.y - x_offset * approach_dir.y();
-  target_pose.position.z = obj_planning.point.z - x_offset * approach_dir.z();
+  target_pose.position.z = current_pose.pose.position.z;  // KEEP CURRENT Z - no vertical motion!
 
   // Calculate alignment error relative to the standoff pose in 3D
   double error = std::sqrt(
@@ -352,30 +357,54 @@ BT::NodeStatus VisualServoAction::onRunning()
   if (error < d_->servo_threshold) {
     RCLCPP_INFO(node_->get_logger(),
       "VisualServo: Aligned! error (%f) < threshold (%f)", error, d_->servo_threshold);
-    // Write absolute aligned object pose to the output port
-    geometry_msgs::msg::PoseStamped corrected;
-    corrected.header.frame_id = move_group_->getPlanningFrame();
-    corrected.header.stamp = node_->now();
-    corrected.pose.position.x = obj_planning.point.x;
-    corrected.pose.position.y = obj_planning.point.y;
-    corrected.pose.position.z = obj_planning.point.z;
-    corrected.pose.orientation = current_pose.pose.orientation;
-    setOutput("corrected_pose", corrected);
+    
+    // Output corrected pose: the detected OBJECT position (final MoveArm will advance to this)
+    geometry_msgs::msg::PoseStamped corrected_base;
+    corrected_base.header.frame_id = move_group_->getPlanningFrame();
+    corrected_base.header.stamp = node_->now();
+    corrected_base.pose.position.x = obj_planning.point.x;
+    corrected_base.pose.position.y = obj_planning.point.y;
+    corrected_base.pose.position.z = obj_planning.point.z;
+    corrected_base.pose.orientation = current_pose.pose.orientation;
+    
+    geometry_msgs::msg::PoseStamped corrected_map;
+    try {
+      d_->tf_buffer->transform(corrected_base, corrected_map, "map", tf2::durationFromSec(0.5));
+      RCLCPP_INFO(node_->get_logger(), 
+        "VisualServo: Outputting corrected_pose in map frame: x=%.3f, y=%.3f, z=%.3f (detected object position)",
+        corrected_map.pose.position.x, corrected_map.pose.position.y, corrected_map.pose.position.z);
+      setOutput("corrected_pose", corrected_map);
+    } catch (tf2::TransformException &ex) {
+      RCLCPP_WARN(node_->get_logger(), "VisualServo: TF transform failed: %s. Using base_footprint frame.", ex.what());
+      setOutput("corrected_pose", corrected_base);
+    }
     return BT::NodeStatus::SUCCESS;
   }
 
   if (d_->current_iteration >= d_->max_iterations) {
     RCLCPP_WARN(node_->get_logger(),
       "VisualServo: Max iterations reached. Writing best-effort corrected pose.");
-    // Write absolute aligned object pose to the output port
-    geometry_msgs::msg::PoseStamped corrected;
-    corrected.header.frame_id = move_group_->getPlanningFrame();
-    corrected.header.stamp = node_->now();
-    corrected.pose.position.x = obj_planning.point.x;
-    corrected.pose.position.y = obj_planning.point.y;
-    corrected.pose.position.z = obj_planning.point.z;
-    corrected.pose.orientation = current_pose.pose.orientation;
-    setOutput("corrected_pose", corrected);
+    
+    // Output corrected pose: object XY position but CURRENT gripper Z
+    geometry_msgs::msg::PoseStamped corrected_base;
+    corrected_base.header.frame_id = move_group_->getPlanningFrame();
+    corrected_base.header.stamp = node_->now();
+    corrected_base.pose.position.x = obj_planning.point.x;
+    corrected_base.pose.position.y = obj_planning.point.y;
+    corrected_base.pose.position.z = current_pose.pose.position.z;  // Keep current Z!
+    corrected_base.pose.orientation = current_pose.pose.orientation;
+    
+    geometry_msgs::msg::PoseStamped corrected_map;
+    try {
+      d_->tf_buffer->transform(corrected_base, corrected_map, "map", tf2::durationFromSec(0.5));
+      RCLCPP_INFO(node_->get_logger(), 
+        "VisualServo: Outputting best-effort corrected_pose in map frame: x=%.3f, y=%.3f, z=%.3f (maintained current Z)",
+        corrected_map.pose.position.x, corrected_map.pose.position.y, corrected_map.pose.position.z);
+      setOutput("corrected_pose", corrected_map);
+    } catch (tf2::TransformException &ex) {
+      RCLCPP_WARN(node_->get_logger(), "VisualServo: TF transform failed: %s. Using base_footprint frame.", ex.what());
+      setOutput("corrected_pose", corrected_base);
+    }
     return BT::NodeStatus::SUCCESS;
   }
 
