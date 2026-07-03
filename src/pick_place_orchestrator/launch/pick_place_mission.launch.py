@@ -1,45 +1,41 @@
 #!/usr/bin/env python3
-"""
-Complete Pick and Place Mission Launch File
+"""Complete Pick and Place Mission Launch File."""
 
-This launch file brings up the entire mobile manipulator system and executes
-a table-to-table pick and place task autonomously.
-
-System Components:
-- Gazebo Harmonic simulation with nav_workspace world
-- Nav2 navigation stack with pre-built map
-- MoveIt 2 motion planning
-- Base Placement Optimizer
-- Pick & Place Orchestrator with Behavior Tree
-- Mission Trigger Node (auto-starts the mission)
-
-Tables:
-- Pick table:  (5.0, 4.0, 0.8m height)
-- Place table: (5.0, -4.0, 0.8m height)
-- Workpiece spawns at (5.0, 4.0, 0.88m) on pick table
-
-Usage:
-  ros2 launch pick_place_orchestrator pick_place_mission.launch.py
-
-Optional Arguments:
-  headless:=true|false    - Run Gazebo without GUI (default: false for visualization)
-  use_rviz:=true|false    - Launch RViz2 (default: true)
-  auto_start:=true|false  - Automatically trigger mission (default: true)
-  pick_x:=5.0             - Pick pose X coordinate (default: 5.0)
-  pick_y:=4.0             - Pick pose Y coordinate (default: 4.0)
-  pick_z:=0.88            - Pick pose Z coordinate (default: 0.88)
-  place_x:=5.0            - Place pose X coordinate (default: 5.0)
-  place_y:=-4.0           - Place pose Y coordinate (default: -4.0)
-  place_z:=0.88           - Place pose Z coordinate (default: 0.88)
-"""
+# System Components:
+# - Gazebo Harmonic simulation with nav_workspace world
+# - Nav2 navigation stack with pre-built map
+# - MoveIt 2 motion planning
+# - Base Placement Optimizer
+# - Pick & Place Orchestrator with Behavior Tree
+# - Mission Trigger Node (auto-starts the mission)
+#
+# Tables:
+# - Pick table:  (5.0, 4.0, 0.8m height)
+# - Place table: (5.0, -4.0, 0.8m height)
+# - Workpiece spawns at (5.0, 4.0, 0.88m) on pick table
+#
+# Usage:
+#   ros2 launch pick_place_orchestrator pick_place_mission.launch.py
+#
+# Optional Arguments:
+#   headless:=true|false    - Run Gazebo without GUI (default: false for visualization)
+#   use_rviz:=true|false    - Launch RViz2 (default: true)
+#   auto_start:=true|false  - Automatically trigger mission (default: true)
+#   pick_x:=5.0             - Pick pose X coordinate (default: 5.0)
+#   pick_y:=4.0             - Pick pose Y coordinate (default: 4.0)
+#   pick_z:=0.88            - Pick pose Z coordinate (default: 0.88)
+#   place_x:=4.5            - Place pose X coordinate (default: 4.5)
+#   place_y:=-4.0           - Place pose Y coordinate (default: -4.0)
+#   place_z:=1.10           - Place pose Z coordinate (default: 1.10)
 
 import os
+
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, TimerAction
 from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration, PythonExpression
+from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
 
@@ -139,8 +135,8 @@ def generate_launch_description():
         ),
         DeclareLaunchArgument(
             'place_z',
-            default_value='0.68',
-            description='Place pose Z coordinate (world frame, table height + object height/2)'
+            default_value='1.10',
+            description='Place pose Z coordinate (world frame, above container walls for IK reachability)'
         ),
 
         # Launch the full system

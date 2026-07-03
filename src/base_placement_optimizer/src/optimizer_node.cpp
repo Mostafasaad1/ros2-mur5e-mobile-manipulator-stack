@@ -176,8 +176,8 @@ void BasePlacementOptimizerNode::execute(
   feedback->current_phase = "SAMPLING_CANDIDATES";
   goal_handle->publish_feedback(feedback);
 
-  moveit::core::RobotState robot_state(robot_model_);
-  robot_state.setToDefaultValues();
+  planning_scene_monitor::LockedPlanningSceneRO planning_scene(planning_scene_monitor_);
+  moveit::core::RobotState robot_state = planning_scene->getCurrentState();
   const moveit::core::JointModelGroup * joint_model_group =
     robot_model_->getJointModelGroup(planning_group_);
 
@@ -208,8 +208,6 @@ void BasePlacementOptimizerNode::execute(
     double path_distance;
   };
   std::vector<Candidate> valid_candidates;
-
-  planning_scene_monitor::LockedPlanningSceneRO planning_scene(planning_scene_monitor_);
 
   for (int i = 0; i < angular_samples_; ++i) {
     if (goal_handle->is_canceling()) {
@@ -358,7 +356,7 @@ bool BasePlacementOptimizerNode::is_candidate_safe(
   // Sample points along the footprint boundary
   std::vector<std::pair<double, double>> check_points;
   check_points.push_back({0.0, 0.0}); // Also check center
-  
+
   int num_samples = 5;
   for (size_t i = 0; i < footprint.size(); ++i) {
     auto p1 = footprint[i];
@@ -366,8 +364,8 @@ bool BasePlacementOptimizerNode::is_candidate_safe(
     for (int j = 0; j < num_samples; ++j) {
       double t = static_cast<double>(j) / num_samples;
       check_points.push_back({
-        p1.first + t * (p2.first - p1.first),
-        p1.second + t * (p2.second - p1.second)
+          p1.first + t * (p2.first - p1.first),
+          p1.second + t * (p2.second - p1.second)
       });
     }
   }
@@ -378,7 +376,7 @@ bool BasePlacementOptimizerNode::is_candidate_safe(
   double origin_y = costmap->info.origin.position.y;
   double resolution = costmap->info.resolution;
 
-  for (const auto& pt : check_points) {
+  for (const auto & pt : check_points) {
     // Transform footprint point to map frame
     double mx = x + pt.first * cos_th - pt.second * sin_th;
     double my = y + pt.first * sin_th + pt.second * cos_th;
@@ -387,7 +385,7 @@ bool BasePlacementOptimizerNode::is_candidate_safe(
     int cell_y = static_cast<int>((my - origin_y) / resolution);
 
     if (cell_x < 0 || cell_x >= static_cast<int>(costmap->info.width) ||
-        cell_y < 0 || cell_y >= static_cast<int>(costmap->info.height))
+      cell_y < 0 || cell_y >= static_cast<int>(costmap->info.height))
     {
       return false; // Out of bounds is not safe
     }

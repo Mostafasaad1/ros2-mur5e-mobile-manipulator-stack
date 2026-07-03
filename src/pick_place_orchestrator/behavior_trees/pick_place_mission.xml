@@ -29,7 +29,15 @@
                         step="EXECUTE_PICK"
                         step_index="4" />
                         
-        <!-- Approach with 20cm standoff + 10cm elevation - avoids wrist hitting table -->
+        <!-- Safe pre-approach standoff - avoids hitting the tall workpiece while unfolding -->
+        <MoveArm target_pose="{pick_pose}"
+                 x_offset="0.30"
+                 z_offset="0.25"
+                 phase="PICK_PHASE"
+                 step="EXECUTE_PICK"
+                 step_index="4" />
+
+        <!-- Descend to visual servo starting pose -->
         <MoveArm target_pose="{pick_pose}"
                  x_offset="0.20"
                  z_offset="0.10"
@@ -113,7 +121,7 @@
             <!-- Step 10: Execute Place (Move, Open) -->
             <!-- Approach vertically first -->
             <MoveArm target_pose="{place_pose}"
-                     z_offset="0.12"
+                     z_offset="0.30"
                      phase="PLACE_PHASE"
                      step="EXECUTE_PLACE"
                      step_index="10" />
@@ -128,7 +136,7 @@
                             phase="PLACE_PHASE"
                             step="EXECUTE_PLACE"
                             step_index="10" />
-                            
+
             <!-- Step 11: Detach Payload -->
             <DetachPayload object_id="target_payload"
                            attached_link="ur5e_tool0"

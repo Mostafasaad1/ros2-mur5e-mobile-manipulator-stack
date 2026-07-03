@@ -183,7 +183,8 @@ protected:
         {"robot_description_semantic", getSrdf()},
         {"bt_xml_path",
           ament_index_cpp::get_package_share_directory("pick_place_orchestrator") +
-          "/behavior_trees/pick_place_mission.xml"}
+          "/behavior_trees/pick_place_mission.xml"},
+        {"bypass_visual_servo", true}
     });
 
     orchestrator_node_ = std::make_shared<OrchestratorNode>(options);

@@ -14,12 +14,14 @@
 namespace pick_place_orchestrator
 {
 
-enum class VisualServoState {
+enum class VisualServoState
+{
   WAITING_FOR_IMAGES,
   MOVING
 };
 
-struct VisualServoPrivate {
+struct VisualServoPrivate
+{
   VisualServoState state{VisualServoState::WAITING_FOR_IMAGES};
   int current_iteration{0};
   int max_iterations{3};
@@ -46,7 +48,8 @@ VisualServoAction::VisualServoAction(const std::string & name, const BT::NodeCon
     throw std::runtime_error("VisualServoAction: Could not find 'node' on blackboard");
   }
 
-  move_group_ = std::make_shared<moveit::planning_interface::MoveGroupInterface>(node_, "robot_arm");
+  move_group_ = std::make_shared<moveit::planning_interface::MoveGroupInterface>(node_,
+      "robot_arm");
 
   // Fix 5: d_ is now an instance member (not static). Subscriptions are created once here
   // in the constructor and persist for the lifetime of this BT node instance.
@@ -91,6 +94,23 @@ BT::PortsList VisualServoAction::providedPorts()
 BT::NodeStatus VisualServoAction::onStart()
 {
   started_ = false;
+
+  bool bypass = false;
+  if (!node_->has_parameter("bypass_visual_servo")) {
+    node_->declare_parameter<bool>("bypass_visual_servo", false);
+  }
+  node_->get_parameter("bypass_visual_servo", bypass);
+
+  if (bypass) {
+    RCLCPP_INFO(node_->get_logger(),
+        "VisualServo: bypass_visual_servo is true. Skipping visual servoing.");
+    geometry_msgs::msg::PoseStamped target_pose;
+    if (getInput("target_pose", target_pose)) {
+      setOutput("corrected_pose", target_pose);
+    }
+    return BT::NodeStatus::SUCCESS;
+  }
+
   // Fix 5: reset state only — do NOT recreate subscriptions
   d_->state = VisualServoState::WAITING_FOR_IMAGES;
   d_->current_iteration = 0;
@@ -170,8 +190,11 @@ BT::NodeStatus VisualServoAction::onRunning()
   cv::findContours(mask, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
 
   if (contours.empty()) {
-    cv::imwrite("/home/mox/.gemini/antigravity/brain/93e3932c-2e82-4a2d-931d-ed97b8590283/wrist_camera_view.png", cv_ptr->image);
-    RCLCPP_WARN(node_->get_logger(), "VisualServo: No yellow contours found! Saved image to wrist_camera_view.png");
+    cv::imwrite(
+        "/home/mox/.gemini/antigravity/brain/93e3932c-2e82-4a2d-931d-ed97b8590283/wrist_camera_view.png",
+        cv_ptr->image);
+    RCLCPP_WARN(node_->get_logger(),
+        "VisualServo: No yellow contours found! Saved image to wrist_camera_view.png");
     d_->latest_color = nullptr;
     return BT::NodeStatus::RUNNING;
   }
@@ -181,7 +204,7 @@ BT::NodeStatus VisualServoAction::onRunning()
   int largest_idx = -1;
   for (size_t i = 0; i < contours.size(); ++i) {
     double area = cv::contourArea(contours[i]);
-    if (area > max_area) { max_area = area; largest_idx = static_cast<int>(i); }
+    if (area > max_area) {max_area = area; largest_idx = static_cast<int>(i);}
   }
 
   if (largest_idx == -1 || max_area < 200.0) {
@@ -252,7 +275,8 @@ BT::NodeStatus VisualServoAction::onRunning()
           int nx = static_cast<int>(cx) + dx;
           int ny = static_cast<int>(cy) + dy;
           if (nx >= 0 && nx < depth_img.cols && ny >= 0 && ny < depth_img.rows) {
-            float val = (depth_img.type() == CV_32FC1) ? depth_img.at<float>(ny, nx) : depth_img.at<uint16_t>(ny, nx) * 0.001f;
+            float val = (depth_img.type() == CV_32FC1) ? depth_img.at<float>(ny,
+  nx) : depth_img.at<uint16_t>(ny, nx) * 0.001f;
             ss << val << " ";
           } else {
             ss << "OOB ";
@@ -328,7 +352,7 @@ BT::NodeStatus VisualServoAction::onRunning()
   tf2::fromMsg(current_pose.pose.orientation, q);
   tf2::Vector3 approach_dir = tf2::quatRotate(q, tf2::Vector3(0, 0, 1));
   double yaw = std::atan2(approach_dir.y(), approach_dir.x());
-  
+
   RCLCPP_WARN(node_->get_logger(),
     "VisualServo DEBUG: approach_dir = [%.3f, %.3f, %.3f] | Gripper pointing sideways (Y-axis)",
     approach_dir.x(), approach_dir.y(), approach_dir.z());
@@ -357,7 +381,7 @@ BT::NodeStatus VisualServoAction::onRunning()
   if (error < d_->servo_threshold) {
     RCLCPP_INFO(node_->get_logger(),
       "VisualServo: Aligned! error (%f) < threshold (%f)", error, d_->servo_threshold);
-    
+
     // Output corrected pose: the detected OBJECT position (final MoveArm will advance to this)
     geometry_msgs::msg::PoseStamped corrected_base;
     corrected_base.header.frame_id = move_group_->getPlanningFrame();
@@ -366,16 +390,18 @@ BT::NodeStatus VisualServoAction::onRunning()
     corrected_base.pose.position.y = obj_planning.point.y;
     corrected_base.pose.position.z = obj_planning.point.z;
     corrected_base.pose.orientation = current_pose.pose.orientation;
-    
+
     geometry_msgs::msg::PoseStamped corrected_map;
     try {
       d_->tf_buffer->transform(corrected_base, corrected_map, "map", tf2::durationFromSec(0.5));
-      RCLCPP_INFO(node_->get_logger(), 
+      RCLCPP_INFO(node_->get_logger(),
         "VisualServo: Outputting corrected_pose in map frame: x=%.3f, y=%.3f, z=%.3f (detected object position)",
-        corrected_map.pose.position.x, corrected_map.pose.position.y, corrected_map.pose.position.z);
+        corrected_map.pose.position.x, corrected_map.pose.position.y,
+          corrected_map.pose.position.z);
       setOutput("corrected_pose", corrected_map);
-    } catch (tf2::TransformException &ex) {
-      RCLCPP_WARN(node_->get_logger(), "VisualServo: TF transform failed: %s. Using base_footprint frame.", ex.what());
+    } catch (tf2::TransformException & ex) {
+      RCLCPP_WARN(node_->get_logger(),
+          "VisualServo: TF transform failed: %s. Using base_footprint frame.", ex.what());
       setOutput("corrected_pose", corrected_base);
     }
     return BT::NodeStatus::SUCCESS;
@@ -384,7 +410,7 @@ BT::NodeStatus VisualServoAction::onRunning()
   if (d_->current_iteration >= d_->max_iterations) {
     RCLCPP_WARN(node_->get_logger(),
       "VisualServo: Max iterations reached. Writing best-effort corrected pose.");
-    
+
     // Output corrected pose: object XY position but CURRENT gripper Z
     geometry_msgs::msg::PoseStamped corrected_base;
     corrected_base.header.frame_id = move_group_->getPlanningFrame();
@@ -393,16 +419,18 @@ BT::NodeStatus VisualServoAction::onRunning()
     corrected_base.pose.position.y = obj_planning.point.y;
     corrected_base.pose.position.z = current_pose.pose.position.z;  // Keep current Z!
     corrected_base.pose.orientation = current_pose.pose.orientation;
-    
+
     geometry_msgs::msg::PoseStamped corrected_map;
     try {
       d_->tf_buffer->transform(corrected_base, corrected_map, "map", tf2::durationFromSec(0.5));
-      RCLCPP_INFO(node_->get_logger(), 
+      RCLCPP_INFO(node_->get_logger(),
         "VisualServo: Outputting best-effort corrected_pose in map frame: x=%.3f, y=%.3f, z=%.3f (maintained current Z)",
-        corrected_map.pose.position.x, corrected_map.pose.position.y, corrected_map.pose.position.z);
+        corrected_map.pose.position.x, corrected_map.pose.position.y,
+          corrected_map.pose.position.z);
       setOutput("corrected_pose", corrected_map);
-    } catch (tf2::TransformException &ex) {
-      RCLCPP_WARN(node_->get_logger(), "VisualServo: TF transform failed: %s. Using base_footprint frame.", ex.what());
+    } catch (tf2::TransformException & ex) {
+      RCLCPP_WARN(node_->get_logger(),
+          "VisualServo: TF transform failed: %s. Using base_footprint frame.", ex.what());
       setOutput("corrected_pose", corrected_base);
     }
     return BT::NodeStatus::SUCCESS;
@@ -412,7 +440,7 @@ BT::NodeStatus VisualServoAction::onRunning()
   double dx = target_pose.position.x - current_pose.pose.position.x;
   double dy = target_pose.position.y - current_pose.pose.position.y;
   double dz = target_pose.position.z - current_pose.pose.position.z;
-  double dist = std::sqrt(dx*dx + dy*dy + dz*dz);
+  double dist = std::sqrt(dx * dx + dy * dy + dz * dz);
   if (dist > 0.15) {
     dx = (dx / dist) * 0.15;
     dy = (dy / dist) * 0.15;
@@ -451,9 +479,9 @@ BT::NodeStatus VisualServoAction::onRunning()
   plan.trajectory = trajectory;
 
   future_ = std::async(std::launch::async, [this, plan]() mutable {
-    move_group_->setMaxVelocityScalingFactor(0.15);
-    move_group_->setMaxAccelerationScalingFactor(0.15);
-    return move_group_->execute(plan);
+        move_group_->setMaxVelocityScalingFactor(0.15);
+        move_group_->setMaxAccelerationScalingFactor(0.15);
+        return move_group_->execute(plan);
   });
 
   started_ = true;

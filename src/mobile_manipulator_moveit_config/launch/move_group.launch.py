@@ -65,6 +65,8 @@ def generate_launch_description():
                 'trajectory_execution.allowed_execution_duration_scaling': 10.0,
                 'trajectory_execution.allowed_goal_duration_margin': 10.0,
                 'trajectory_execution.execution_duration_monitoring': False,
+                'start_state_max_bounds_error': 0.2,
+                'check_start_state_bounds.start_state_max_bounds_error': 0.2,
             },
         ],
     )

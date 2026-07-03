@@ -52,23 +52,27 @@ BT::NodeStatus AttachPayloadAction::tick()
   collision_object.header.frame_id = attached_link;
   collision_object.id = object_id;
 
-  // Let's assume a box of size 0.05 x 0.05 x 0.10 m (typical target payload size)
+  // Define actual cylinder workpiece size: radius = 0.03m, length = 0.60m
   shape_msgs::msg::SolidPrimitive primitive;
-  primitive.type = shape_msgs::msg::SolidPrimitive::BOX;
-  primitive.dimensions.resize(3);
-  primitive.dimensions[0] = 0.05;
-  primitive.dimensions[1] = 0.05;
-  primitive.dimensions[2] = 0.10;
+  primitive.type = shape_msgs::msg::SolidPrimitive::CYLINDER;
+  primitive.dimensions.resize(2);
+  primitive.dimensions[shape_msgs::msg::SolidPrimitive::CYLINDER_HEIGHT] = 0.60;
+  primitive.dimensions[shape_msgs::msg::SolidPrimitive::CYLINDER_RADIUS] = 0.03;
 
-  // Center the payload slightly in front of the flange/tool0 link (e.g. +5cm along Z axis)
-  geometry_msgs::msg::Pose box_pose;
-  box_pose.position.x = 0.0;
-  box_pose.position.y = 0.0;
-  box_pose.position.z = 0.05;
-  box_pose.orientation.w = 1.0;
+  // Center the cylinder at fingertips (Z axis offset of 0.03m)
+  // Rotate by 90 degrees around Y axis to align the cylinder's height (Z axis)
+  // with tool0's X axis (which points vertically in world coordinates when grasping).
+  geometry_msgs::msg::Pose cylinder_pose;
+  cylinder_pose.position.x = 0.0;
+  cylinder_pose.position.y = 0.0;
+  cylinder_pose.position.z = 0.03;
+  cylinder_pose.orientation.x = 0.0;
+  cylinder_pose.orientation.y = 0.70710678;
+  cylinder_pose.orientation.z = 0.0;
+  cylinder_pose.orientation.w = 0.70710678;
 
   collision_object.primitives.push_back(primitive);
-  collision_object.primitive_poses.push_back(box_pose);
+  collision_object.primitive_poses.push_back(cylinder_pose);
   collision_object.operation = moveit_msgs::msg::CollisionObject::ADD;
 
   // 2. Wrap it inside an AttachedCollisionObject message

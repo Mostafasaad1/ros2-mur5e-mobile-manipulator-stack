@@ -2,7 +2,7 @@ import os
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, TimerAction
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 
@@ -56,6 +56,13 @@ def generate_launch_description():
         }.items(),
     )
 
+    # Delay the navigation launch by 12 seconds to ensure Gazebo controllers are spawned
+    # and publishing transforms/odometry before AMCL attempts to configure.
+    delayed_navigation_launch = TimerAction(
+        period=12.0,
+        actions=[navigation_launch]
+    )
+
     return LaunchDescription([
         # Declare arguments with descriptions and defaults
         DeclareLaunchArgument(
@@ -98,6 +105,6 @@ def generate_launch_description():
         # Launch Gazebo simulation
         gazebo_launch,
 
-        # Launch Navigation and RViz
-        navigation_launch,
+        # Launch Navigation and RViz with delay
+        delayed_navigation_launch,
     ])
