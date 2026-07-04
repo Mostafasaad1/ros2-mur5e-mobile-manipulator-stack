@@ -40,7 +40,13 @@ def generate_launch_description():
             moveit_configs.to_dict(),
             {
                 'bt_xml_path': bt_xml_path,
-                'use_sim_time': True
+                'use_sim_time': True,
+                # Camera bypass: the wrist camera's -90 deg Y-pitch mount on tool0
+                # combined with the horizontal grasp orientation rotates tool0's +Z axis
+                # laterally into the environment wall instead of toward the workpiece.
+                # TargetAcquisition already gives us an accurate pick pose, so servo is
+                # skipped and the raw detected pose is forwarded as the corrected_pose.
+                'bypass_visual_servo': True
             }
         ]
     )

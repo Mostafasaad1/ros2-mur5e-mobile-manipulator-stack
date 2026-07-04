@@ -33,6 +33,7 @@
         <MoveArm target_pose="{pick_pose}"
                  x_offset="0.20"
                  z_offset="0.10"
+                 planner_id="PTP"
                  phase="PICK_PHASE"
                  step="EXECUTE_PICK"
                  step_index="4" />
@@ -50,6 +51,7 @@
         <!-- Advance to grasp - small 3cm standoff so fingers wrap around object, not push it -->
         <MoveArm target_pose="{corrected_pick_pose}"
                  x_offset="0.03"
+                 planner_id="LIN"
                  phase="PICK_PHASE"
                  step="EXECUTE_PICK"
                  step_index="4" />
@@ -69,6 +71,7 @@
         <!-- Lift straight up after payload is attached to planning scene -->
         <MoveArm target_pose="{corrected_pick_pose}"
                  z_offset="0.12"
+                 planner_id="LIN"
                  phase="PICK_PHASE"
                  step="EXECUTE_PICK"
                  step_index="4" />
@@ -111,15 +114,17 @@
                             step_index="9" />
                             
             <!-- Step 10: Execute Place (Move, Open) -->
-            <!-- Approach vertically first -->
+            <!-- Approach vertically first - 15cm clears the container walls (22cm) with margin -->
             <MoveArm target_pose="{place_pose}"
-                     z_offset="0.30"
+                     z_offset="0.15"
+                     planner_id="PTP"
                      phase="PLACE_PHASE"
                      step="EXECUTE_PLACE"
                      step_index="10" />
 
             <!-- Descend to place -->
             <MoveArm target_pose="{place_pose}"
+                     planner_id="LIN"
                      phase="PLACE_PHASE"
                      step="EXECUTE_PLACE"
                      step_index="10" />
@@ -136,9 +141,10 @@
                            step="DETACH_PAYLOAD"
                            step_index="11" />
 
-            <!-- Retract vertically to clear container walls -->
+            <!-- Retract vertically to clear container walls (15cm matches approach clearance) -->
             <MoveArm target_pose="{place_pose}"
-                     z_offset="0.20"
+                     z_offset="0.15"
+                     planner_id="LIN"
                      phase="PLACE_PHASE"
                      step="EXECUTE_PLACE"
                      step_index="10" />

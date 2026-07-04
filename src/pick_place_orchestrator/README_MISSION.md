@@ -108,6 +108,19 @@ The orchestrator executes a 12-step behavior tree:
 11. **Detach Payload** - Remove object from planning scene
 12. **Stow Arm Place** - Return arm to stowed position
 
+## Deterministic Motion Planning Configuration
+
+To eliminate randomized path planning behavior and ensure high-reliability executions, the motion planning system has been configured with two pipelines:
+
+### 1. Pilz Industrial Motion Planner (Primary)
+- **Named Joint-Space Poses (`PTP`)**: Used for transition motions between named states (e.g. moving to `stowed` or `home`). This guarantees zero randomness and identical trajectory executions across all cycles.
+- **Cartesian Linear Paths (`LIN`)**: Used for pick/place approaches and retreats. Movement paths follow precise straight Cartesian lines.
+- **EEF Orientation Locking**: End-effector roll and pitch axes are locked to within a semi-strict tolerance of $\pm 0.02$ radians relative to the reference base frame (`ur5e_base_link`) during Cartesian approaches/retreats, preventing roll/pitch flips while keeping yaw free to align dynamically with base placement.
+
+### 2. OMPL Planner (Fallback)
+- **Fallback Planning**: Configured as an automatic fallback only for named/free-space transitions. If a Pilz `PTP` plan fails, the orchestrator node automatically falls back to `OMPL` (using OMPL's default optimizing/RRTConnect planners) to plan a path around workspace obstacles.
+- **Immediate Abort on Cartesian Moves**: In compliance with safety limits, if a Cartesian linear approach or retreat (`LIN`) plan fails, the system aborts immediately with failure instead of falling back to OMPL, preventing collision risks from randomized paths.
+
 ## Troubleshooting
 
 ### Mission doesn't start automatically

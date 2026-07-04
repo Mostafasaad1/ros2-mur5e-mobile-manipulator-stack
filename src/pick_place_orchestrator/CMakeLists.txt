@@ -181,6 +181,54 @@ if(BUILD_TESTING)
   )
   target_link_libraries(test_failure_recovery pick_place_orchestrator_lib)
   target_link_libraries(test_failure_recovery "${cpp_typesupport_target}")
+
+  # gtest target: test_deterministic_joint_space
+  ament_add_gtest(test_deterministic_joint_space test/test_deterministic_joint_space.cpp)
+  target_include_directories(test_deterministic_joint_space PRIVATE include)
+  target_compile_features(test_deterministic_joint_space PUBLIC cxx_std_17)
+  ament_target_dependencies(test_deterministic_joint_space
+    rclcpp
+    rclcpp_action
+    behaviortree_cpp
+    geometry_msgs
+    moveit_ros_planning_interface
+    base_placement_optimizer
+    nav2_msgs
+  )
+  target_link_libraries(test_deterministic_joint_space pick_place_orchestrator_lib)
+  target_link_libraries(test_deterministic_joint_space "${cpp_typesupport_target}")
+
+  # gtest target: test_cartesian_constraints
+  ament_add_gtest(test_cartesian_constraints test/test_cartesian_constraints.cpp)
+  target_include_directories(test_cartesian_constraints PRIVATE include)
+  target_compile_features(test_cartesian_constraints PUBLIC cxx_std_17)
+  ament_target_dependencies(test_cartesian_constraints
+    rclcpp
+    rclcpp_action
+    behaviortree_cpp
+    geometry_msgs
+    moveit_ros_planning_interface
+    base_placement_optimizer
+    nav2_msgs
+  )
+  target_link_libraries(test_cartesian_constraints pick_place_orchestrator_lib)
+  target_link_libraries(test_cartesian_constraints "${cpp_typesupport_target}")
+
+  # gtest target: test_planning_fallback
+  ament_add_gtest(test_planning_fallback test/test_planning_fallback.cpp)
+  target_include_directories(test_planning_fallback PRIVATE include)
+  target_compile_features(test_planning_fallback PUBLIC cxx_std_17)
+  ament_target_dependencies(test_planning_fallback
+    rclcpp
+    rclcpp_action
+    behaviortree_cpp
+    geometry_msgs
+    moveit_ros_planning_interface
+    base_placement_optimizer
+    nav2_msgs
+  )
+  target_link_libraries(test_planning_fallback pick_place_orchestrator_lib)
+  target_link_libraries(test_planning_fallback "${cpp_typesupport_target}")
 endif()
 
 ament_export_include_directories(include)

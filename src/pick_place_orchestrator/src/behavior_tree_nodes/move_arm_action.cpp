@@ -1,4 +1,7 @@
 #include "pick_place_orchestrator/behavior_tree_nodes.hpp"
+#include <cmath>
+#include "moveit_msgs/msg/constraints.hpp"
+#include "moveit_msgs/msg/orientation_constraint.hpp"
 
 namespace pick_place_orchestrator
 {
@@ -24,7 +27,10 @@ BT::PortsList MoveArmAction::providedPorts()
     BT::InputPort<std::string>("named_pose"),
     BT::InputPort<std::string>("phase"),
     BT::InputPort<std::string>("step"),
-    BT::InputPort<int>("step_index")
+    BT::InputPort<int>("step_index"),
+    BT::InputPort<std::string>("planner_id"),
+    BT::InputPort<double>("velocity_scaling"),
+    BT::InputPort<double>("acceleration_scaling")
   };
 }
 
@@ -52,16 +58,16 @@ BT::NodeStatus MoveArmAction::onStart()
     return BT::NodeStatus::FAILURE;
   }
 
-  // Configure target
-  if (has_named) {
-    RCLCPP_INFO(node_->get_logger(), "MoveArmAction: Planning to named pose: '%s'",
-        named_pose.c_str());
-    if (!move_group_->setNamedTarget(named_pose)) {
-      reportFailure(config().blackboard, "Failed to set named target: '" + named_pose + "'",
-          step_idx_);
-      return BT::NodeStatus::FAILURE;
-    }
-  } else {
+  std::string planner_id_override = "";
+  getInput("planner_id", planner_id_override);
+
+  double velocity_scaling = 0.8;
+  double acceleration_scaling = 0.8;
+  bool has_vel_scale = getInput("velocity_scaling", velocity_scaling).has_value();
+  bool has_acc_scale = getInput("acceleration_scaling", acceleration_scaling).has_value();
+
+  // Compute final target pose with offsets and yaw alignment if has_target is true
+  if (has_target) {
     double z_offset = 0.0;
     getInput("z_offset", z_offset);
     double x_offset = 0.0;
@@ -110,23 +116,159 @@ BT::NodeStatus MoveArmAction::onStart()
         "MoveArmAction: Planning to target pose in frame: %s (x: %.3f, y: %.3f, z: %.3f, offset_x: %.3f, offset_z: %.3f)",
       target_pose.header.frame_id.c_str(), target_pose.pose.position.x, target_pose.pose.position.y,
         target_pose.pose.position.z, x_offset, z_offset);
-
-    if (!move_group_->setPoseTarget(target_pose)) {
-      reportFailure(config().blackboard, "Failed to set pose target", step_idx_);
-      return BT::NodeStatus::FAILURE;
-    }
   }
 
   // Start execution in background thread to avoid blocking BT tick
-  future_ = std::async(std::launch::async, [this]() {
-        move_group_->setMaxVelocityScalingFactor(0.8);
-        move_group_->setMaxAccelerationScalingFactor(0.8);
-        return move_group_->move();
-  });
-  started_ = true;
+  future_ = std::async(std::launch::async,
+      [this, has_named, has_target, named_pose, target_pose, planner_id_override,
+      velocity_scaling, acceleration_scaling, has_vel_scale, has_acc_scale]() {
+        std::string pipeline = "pilz_industrial_motion_planner";
+        std::string planner = "";
+        bool fallback_allowed = false;
 
+        if (!planner_id_override.empty()) {
+          if (planner_id_override == "OMPL") {
+            pipeline = "ompl";
+            planner = "";
+            fallback_allowed = false;
+          } else if (planner_id_override == "PTP") {
+            pipeline = "pilz_industrial_motion_planner";
+            planner = "PTP";
+            fallback_allowed = true;
+          } else if (planner_id_override == "LIN") {
+            pipeline = "pilz_industrial_motion_planner";
+            planner = "LIN";
+            fallback_allowed = false;
+          }
+        } else {
+          if (has_named) {
+            pipeline = "pilz_industrial_motion_planner";
+            planner = "PTP";
+            fallback_allowed = true;
+          } else if (has_target) {
+            pipeline = "pilz_industrial_motion_planner";
+            planner = "LIN";
+            fallback_allowed = false;
+          }
+        }
+
+        // Apply scaling factors (LIN defaults to 0.05 for stability, PTP/others default to 0.8, user overrides preferred)
+        double final_vel_scale = 0.8;
+        double final_acc_scale = 0.8;
+        if (planner == "LIN") {
+          final_vel_scale = 0.05;
+          final_acc_scale = 0.05;
+        }
+        if (has_vel_scale) {
+          final_vel_scale = velocity_scaling;
+        }
+        if (has_acc_scale) {
+          final_acc_scale = acceleration_scaling;
+        }
+
+        move_group_->setMaxVelocityScalingFactor(final_vel_scale);
+        move_group_->setMaxAccelerationScalingFactor(final_acc_scale);
+        RCLCPP_INFO(node_->get_logger(),
+            "MoveArmAction: Set scaling factors - velocity: %.2f, acceleration: %.2f",
+            final_vel_scale, final_acc_scale);
+
+        // Apply path constraints only for LIN Cartesian moves
+        if (pipeline == "pilz_industrial_motion_planner" && planner == "LIN" && has_target) {
+          moveit_msgs::msg::Constraints path_constraints;
+          moveit_msgs::msg::OrientationConstraint ocm;
+          ocm.link_name = move_group_->getEndEffectorLink();
+          ocm.header.frame_id =
+          target_pose.header.frame_id.empty() ? move_group_->getPlanningFrame() :
+          target_pose.header.frame_id;
+          ocm.orientation = target_pose.pose.orientation;
+          ocm.absolute_x_axis_tolerance = 0.02; // roll
+          ocm.absolute_y_axis_tolerance = 0.02; // pitch
+          ocm.absolute_z_axis_tolerance = 2 * M_PI; // yaw
+          ocm.weight = 1.0;
+          path_constraints.orientation_constraints.push_back(ocm);
+          move_group_->setPathConstraints(path_constraints);
+          RCLCPP_INFO(node_->get_logger(),
+          "MoveArmAction: Set path orientation constraints for LIN Cartesian approach (roll/pitch tolerance: 0.02)");
+        } else {
+          move_group_->clearPathConstraints();
+        }
+
+        // Set target on move_group
+        if (has_named) {
+          if (!move_group_->setNamedTarget(named_pose)) {
+            RCLCPP_ERROR(node_->get_logger(), "MoveArmAction: Failed to set named target: '%s'",
+            named_pose.c_str());
+            return moveit::core::MoveItErrorCode(
+            moveit_msgs::msg::MoveItErrorCodes::INVALID_ROBOT_STATE);
+          }
+        } else if (has_target) {
+          if (!move_group_->setPoseTarget(target_pose)) {
+            RCLCPP_ERROR(node_->get_logger(), "MoveArmAction: Failed to set pose target");
+            return moveit::core::MoveItErrorCode(
+            moveit_msgs::msg::MoveItErrorCodes::INVALID_ROBOT_STATE);
+          }
+        }
+
+        // Set planning pipeline/planner
+        move_group_->setPlanningPipelineId(pipeline);
+        if (!planner.empty()) {
+          move_group_->setPlannerId(planner);
+        }
+
+        RCLCPP_INFO(node_->get_logger(),
+        "MoveArmAction: Planning attempt with pipeline: %s, planner: %s", pipeline.c_str(),
+        planner.c_str());
+
+        moveit::planning_interface::MoveGroupInterface::Plan plan;
+        moveit::core::MoveItErrorCode plan_res = move_group_->plan(plan);
+
+        if (plan_res != moveit::core::MoveItErrorCode::SUCCESS) {
+          RCLCPP_WARN(node_->get_logger(), "MoveArmAction: Primary planning failed with code: %d",
+          plan_res.val);
+
+          if (fallback_allowed) {
+            RCLCPP_INFO(node_->get_logger(),
+            "MoveArmAction: Fallback allowed. Retrying with OMPL...");
+            move_group_->setPlanningPipelineId("ompl");
+            move_group_->setPlannerId("");
+            move_group_->clearPathConstraints();
+
+            // Set target again
+            if (has_named) {
+              move_group_->setNamedTarget(named_pose);
+            } else if (has_target) {
+              move_group_->setPoseTarget(target_pose);
+            }
+
+            plan_res = move_group_->plan(plan);
+            if (plan_res != moveit::core::MoveItErrorCode::SUCCESS) {
+              RCLCPP_ERROR(node_->get_logger(),
+              "MoveArmAction: Fallback planning also failed with code: %d", plan_res.val);
+              return plan_res;
+            }
+            RCLCPP_INFO(node_->get_logger(), "MoveArmAction: Fallback planning succeeded.");
+          } else {
+            RCLCPP_ERROR(node_->get_logger(),
+            "MoveArmAction: Primary planning failed and fallback is NOT allowed. Aborting.");
+            return plan_res;
+          }
+        } else {
+          RCLCPP_INFO(node_->get_logger(), "MoveArmAction: Primary planning succeeded.");
+        }
+
+        RCLCPP_INFO(node_->get_logger(), "MoveArmAction: Executing planned trajectory...");
+        moveit::core::MoveItErrorCode exec_res = move_group_->execute(plan);
+
+        // Always clear path constraints after execution
+        move_group_->clearPathConstraints();
+
+        return exec_res;
+  });
+
+  started_ = true;
   return BT::NodeStatus::RUNNING;
 }
+
 
 BT::NodeStatus MoveArmAction::onRunning()
 {
