@@ -26,7 +26,7 @@
 #   pick_z:=0.88            - Pick pose Z coordinate (default: 0.88)
 #   place_x:=4.5            - Place pose X coordinate (default: 4.5)
 #   place_y:=-4.0           - Place pose Y coordinate (default: -4.0)
-#   place_z:=1.10           - Place pose Z coordinate (default: 1.10)
+#   place_z:=0.75           - Place pose Z coordinate (default: 0.75)
 
 import os
 
@@ -135,8 +135,8 @@ def generate_launch_description():
         ),
         DeclareLaunchArgument(
             'place_z',
-            default_value='1.10',
-            description='Place pose Z coordinate (world frame, above container walls for IK reachability)'
+            default_value='0.75',
+            description='Place pose Z coordinate (above container walls)'
         ),
 
         # Launch the full system

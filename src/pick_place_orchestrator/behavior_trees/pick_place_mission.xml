@@ -29,15 +29,7 @@
                         step="EXECUTE_PICK"
                         step_index="4" />
                         
-        <!-- Safe pre-approach standoff - avoids hitting the tall workpiece while unfolding -->
-        <MoveArm target_pose="{pick_pose}"
-                 x_offset="0.30"
-                 z_offset="0.25"
-                 phase="PICK_PHASE"
-                 step="EXECUTE_PICK"
-                 step_index="4" />
-
-        <!-- Descend to visual servo starting pose -->
+        <!-- Approach with 20cm standoff + 10cm elevation - avoids wrist hitting table -->
         <MoveArm target_pose="{pick_pose}"
                  x_offset="0.20"
                  z_offset="0.10"
@@ -66,20 +58,20 @@
                         phase="PICK_PHASE"
                         step="EXECUTE_PICK"
                         step_index="4" />
-
-        <!-- Lift straight up -->
-        <MoveArm target_pose="{pick_pose}"
-                 z_offset="0.12"
-                 phase="PICK_PHASE"
-                 step="EXECUTE_PICK"
-                 step_index="4" />
                         
-        <!-- Step 5: Attach Payload -->
+        <!-- Step 5: Attach Payload IMMEDIATELY after closing gripper -->
         <AttachPayload object_id="target_payload"
                        attached_link="ur5e_tool0"
                        phase="PICK_PHASE"
                        step="ATTACH_PAYLOAD"
                        step_index="5" />
+        
+        <!-- Lift straight up after payload is attached to planning scene -->
+        <MoveArm target_pose="{corrected_pick_pose}"
+                 z_offset="0.12"
+                 phase="PICK_PHASE"
+                 step="EXECUTE_PICK"
+                 step_index="4" />
                        
         <!-- Step 6: Stow Arm Pick -->
         <MoveArm named_pose="stowed"

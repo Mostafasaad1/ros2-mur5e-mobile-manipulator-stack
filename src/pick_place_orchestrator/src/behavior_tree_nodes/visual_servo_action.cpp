@@ -467,7 +467,9 @@ BT::NodeStatus VisualServoAction::onRunning()
     // Less than 80% of the path is reachable — skip this iteration
     RCLCPP_WARN(node_->get_logger(),
       "VisualServo: Cartesian path only %.1f%% complete (collision near target). "
-      "Skipping this correction.", fraction * 100.0);
+      "Skipping this correction (iteration %d/%d). "
+      "This can indicate wrong camera orientation or gripper too far from object.",
+      fraction * 100.0, d_->current_iteration, d_->max_iterations);
     d_->latest_color = nullptr;
     d_->latest_depth = nullptr;
     d_->current_iteration++;

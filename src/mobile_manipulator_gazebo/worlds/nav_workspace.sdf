@@ -276,10 +276,10 @@
                    <iyy>0.0002</iyy><iyz>0</iyz><izz>0.0002</izz></inertia>
         </inertial>
         <collision name="col">
-          <geometry><cylinder><radius>0.03</radius><length>0.6</length></cylinder></geometry>
+          <geometry><cylinder><radius>0.03</radius><length>0.4</length></cylinder></geometry>
         </collision>
         <visual name="vis">
-          <geometry><cylinder><radius>0.03</radius><length>0.6</length></cylinder></geometry>
+          <geometry><cylinder><radius>0.03</radius><length>0.4</length></cylinder></geometry>
           <material><ambient>1.0 0.8 0.0 1</ambient><diffuse>1.0 0.8 0.0 1</diffuse></material>
         </visual>
       </link>

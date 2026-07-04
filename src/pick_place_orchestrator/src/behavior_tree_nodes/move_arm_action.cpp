@@ -152,6 +152,9 @@ void MoveArmAction::onHalted()
     RCLCPP_INFO(node_->get_logger(), "MoveArmAction: Halted. Stopping active arm movement.");
     move_group_->stop();
   }
+  if (future_.valid()) {
+    future_.wait();
+  }
 }
 
 }  // namespace pick_place_orchestrator

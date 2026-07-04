@@ -32,7 +32,7 @@ public:
     // Both accessible via wide door at Y ∈ [2.5, 5.5]
     this->declare_parameter("place_x", 4.5);
     this->declare_parameter("place_y", -0.5);  // 2.5m away from target at y=2.0
-    this->declare_parameter("place_z", 1.10);
+    this->declare_parameter("place_z", 0.75);
 
     // Get parameters
     double pick_x = this->get_parameter("pick_x").as_double();

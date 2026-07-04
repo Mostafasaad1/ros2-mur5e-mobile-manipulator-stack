@@ -66,6 +66,8 @@ def generate_launch_description():
             moveit_configs.to_dict(),
             {
                 'reach_radius': 0.80,
+                'angular_samples': 24,
+                'ik_timeout': 0.050,
                 'use_sim_time': True
             }
         ]
