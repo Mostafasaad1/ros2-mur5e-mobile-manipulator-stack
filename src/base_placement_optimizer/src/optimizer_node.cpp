@@ -43,7 +43,7 @@ BasePlacementOptimizerNode::BasePlacementOptimizerNode(const rclcpp::NodeOptions
   // also considered.
   reach_radius_ = this->declare_parameter("reach_radius", 0.80);
   angular_samples_ = this->declare_parameter("angular_samples", 16);
-  ik_timeout_ = this->declare_parameter("ik_timeout", 0.010);
+  ik_timeout_ = this->declare_parameter("ik_timeout", 0.050);  // Raised from 0.010 to match kinematics.yaml budget
   alpha_ = this->declare_parameter("alpha", 0.5);
   // max_nav_distance: candidates farther than this from the robot's current
   // pose are discarded.  12 m is safely within any of our test maps while
@@ -58,6 +58,10 @@ BasePlacementOptimizerNode::BasePlacementOptimizerNode(const rclcpp::NodeOptions
   //   table_half_width (≈0.25) + robot_front_length (0.495) + safety_margin (0.05) ≈ 0.80
   // Default 0.80 m ensures no physical collision while remaining within reach.
   target_clearance_radius_ = this->declare_parameter("target_clearance_radius", 0.80);
+  // grasp_x_offset / grasp_z_offset: must match the values used in the BT XML
+  // MoveArm nodes so the optimizer validates the actual grasp goal pose.
+  grasp_x_offset_ = this->declare_parameter("grasp_x_offset", 0.20);
+  grasp_z_offset_ = this->declare_parameter("grasp_z_offset", 0.20);
 
   // Initialize TF
   tf_buffer_ = std::make_shared<tf2_ros::Buffer>(this->get_clock());
@@ -251,10 +255,48 @@ void BasePlacementOptimizerNode::execute(
       T_map_base.translation() = Eigen::Vector3d(cx, cy, 0.0);
       T_map_base.linear() = Eigen::AngleAxisd(ctheta, Eigen::Vector3d::UnitZ()).toRotationMatrix();
 
-      // Convert object pose to base_link frame
-      Eigen::Isometry3d T_base_obj = T_map_base.inverse() * T_map_obj;
+      // Compute the actual grasp goal pose that MoveArm will target:
+      // - Shift position by grasp_x_offset_ along the object→base direction
+      //   (i.e. the direction from the object toward the robot base in XY).
+      // - Add grasp_z_offset_ in Z.
+      // - Apply horizontal side-grasp orientation (90° pitch, rotated by yaw).
+      // This must match move_arm_action.cpp lines 100-113 exactly.
+      Eigen::Vector3d obj_pos_map = T_map_obj.translation();
+      Eigen::Vector3d base_pos_map(cx, cy, 0.0);
+      Eigen::Vector3d obj_to_base_xy = (base_pos_map - obj_pos_map);
+      obj_to_base_xy.z() = 0.0;
+      double dist_xy = obj_to_base_xy.norm();
+      Eigen::Vector3d obj_to_base_dir =
+        dist_xy > 1e-3 ?
+        Eigen::Vector3d(obj_to_base_xy / dist_xy) :
+        Eigen::Vector3d::UnitX();
+      double grasp_yaw = std::atan2(obj_to_base_dir.y(), obj_to_base_dir.x()) + M_PI;
 
-      // Run IK
+      // Effective grasp position in map frame:
+      // TCP is at a standoff on the BASE SIDE of the object (between base and object).
+      // Matches move_arm_action.cpp which subtracts x_offset in the base→obj direction.
+      Eigen::Vector3d grasp_pos_map =
+        obj_pos_map +
+        grasp_x_offset_ * Eigen::Vector3d(obj_to_base_dir.x(), obj_to_base_dir.y(), 0.0) +
+        Eigen::Vector3d(0.0, 0.0, grasp_z_offset_);
+
+      // Horizontal side-grasp quaternion (matches move_arm_action.cpp)
+      double half_yaw = grasp_yaw * 0.5;
+      Eigen::Quaterniond grasp_q(
+        /* w */ 0.70710678 * std::cos(half_yaw),
+        /* x */ -0.70710678 * std::sin(half_yaw),
+        /* y */ 0.70710678 * std::cos(half_yaw),
+        /* z */ 0.70710678 * std::sin(half_yaw));
+      grasp_q.normalize();
+
+      Eigen::Isometry3d T_map_grasp = Eigen::Isometry3d::Identity();
+      T_map_grasp.translation() = grasp_pos_map;
+      T_map_grasp.linear() = grasp_q.toRotationMatrix();
+
+      // Convert grasp pose to base frame for IK
+      Eigen::Isometry3d T_base_grasp = T_map_base.inverse() * T_map_grasp;
+
+      // Run IK against the effective grasp pose (not the raw object pose)
       moveit::core::GroupStateValidityCallbackFn collision_callback =
         [&planning_scene](moveit::core::RobotState * rs, const moveit::core::JointModelGroup * jmg,
         const double * joint_group_variable_values) {
@@ -263,7 +305,7 @@ void BasePlacementOptimizerNode::execute(
           return !planning_scene->isStateColliding(*rs, jmg->getName());
         };
 
-      bool ik_valid = robot_state.setFromIK(joint_model_group, T_base_obj, ik_timeout_,
+      bool ik_valid = robot_state.setFromIK(joint_model_group, T_base_grasp, ik_timeout_,
           collision_callback);
 
       if (ik_valid) {

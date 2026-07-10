@@ -68,7 +68,7 @@
     <visual>
       <origin xyz="0.0 0.0 0.03" rpy="0 0 0" />
       <geometry>
-        <box size="0.02 0.01 0.06" />
+        <box size="0.02 0.01 0.12" />
       </geometry>
       <material name="grey">
         <color rgba="0.5 0.5 0.5 1.0" />
@@ -77,7 +77,7 @@
     <collision>
       <origin xyz="0.0 0.0 0.03" rpy="0 0 0" />
       <geometry>
-        <box size="0.02 0.01 0.06" />
+        <box size="0.02 0.01 0.12" />
       </geometry>
     </collision>
     <inertial>
@@ -92,7 +92,7 @@
     <visual>
       <origin xyz="0.0 0.0 0.03" rpy="0 0 0" />
       <geometry>
-        <box size="0.02 0.01 0.06" />
+        <box size="0.02 0.01 0.12" />
       </geometry>
       <material name="grey">
         <color rgba="0.5 0.5 0.5 1.0" />
@@ -101,7 +101,7 @@
     <collision>
       <origin xyz="0.0 0.0 0.03" rpy="0 0 0" />
       <geometry>
-        <box size="0.02 0.01 0.06" />
+        <box size="0.02 0.01 0.12" />
       </geometry>
     </collision>
     <inertial>

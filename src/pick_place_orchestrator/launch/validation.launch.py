@@ -10,6 +10,7 @@ from launch.substitutions import LaunchConfiguration
 def generate_launch_description():
     headless = LaunchConfiguration('headless')
     use_rviz = LaunchConfiguration('use_rviz')
+    bypass_visual_servo = LaunchConfiguration('bypass_visual_servo')
 
     # 1. Full simulation/nav/moveit/optimizer stack
     optimizer_demo = IncludeLaunchDescription(
@@ -37,7 +38,10 @@ def generate_launch_description():
                         'launch',
                         'orchestrator.launch.py'
                     )
-                )
+                ),
+                launch_arguments={
+                    'bypass_visual_servo': bypass_visual_servo
+                }.items()
             )
         ]
     )
@@ -52,6 +56,11 @@ def generate_launch_description():
             'use_rviz',
             default_value='true',
             description='Launch RViz2'
+        ),
+        DeclareLaunchArgument(
+            'bypass_visual_servo',
+            default_value='false',
+            description='Bypass visual servo alignment step'
         ),
         optimizer_demo,
         orchestrator

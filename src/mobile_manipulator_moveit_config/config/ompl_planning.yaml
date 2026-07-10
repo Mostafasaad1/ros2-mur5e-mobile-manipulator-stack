@@ -25,6 +25,10 @@ robot_arm:
     - PRMstarkConfigDefault
   projection_evaluator: joints(ur5e_shoulder_pan_joint,ur5e_shoulder_lift_joint)
   longest_valid_segment_fraction: 0.005
+  # Fail fast when a goal pose is unreachable — avoids 40 s stuck windows.
+  # Must stay ≥ kinematics_solver_timeout (0.20 s) × num_ik_attempts (5) = 1 s.
+  default_planning_request_timeout: 3.0
+  goal_state_max_attempts: 5
 
 SBLkConfigDefault:
   type: geometric::SBL

@@ -2,11 +2,15 @@ import os
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
+from launch.actions import DeclareLaunchArgument
+from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 from moveit_configs_utils import MoveItConfigsBuilder
 
 
 def generate_launch_description():
+    bypass_visual_servo = LaunchConfiguration('bypass_visual_servo')
+
     # Get package directories
     moveit_config_dir = get_package_share_directory('mobile_manipulator_moveit_config')
     orchestrator_dir = get_package_share_directory('pick_place_orchestrator')
@@ -41,16 +45,16 @@ def generate_launch_description():
             {
                 'bt_xml_path': bt_xml_path,
                 'use_sim_time': True,
-                # Camera bypass: the wrist camera's -90 deg Y-pitch mount on tool0
-                # combined with the horizontal grasp orientation rotates tool0's +Z axis
-                # laterally into the environment wall instead of toward the workpiece.
-                # TargetAcquisition already gives us an accurate pick pose, so servo is
-                # skipped and the raw detected pose is forwarded as the corrected_pose.
-                'bypass_visual_servo': True
+                'bypass_visual_servo': bypass_visual_servo
             }
         ]
     )
 
     return LaunchDescription([
+        DeclareLaunchArgument(
+            'bypass_visual_servo',
+            default_value='false',
+            description='Bypass visual servo alignment step'
+        ),
         orchestrator_node
     ])

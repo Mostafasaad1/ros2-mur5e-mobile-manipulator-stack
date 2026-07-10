@@ -26,12 +26,12 @@ public:
     // Robot base 2.5m south of pick table for maximum clearance from costmap
     // UR5e has ~0.85m reach - needs optimizer to bring base closer during pick
     this->declare_parameter("pick_x", 4.5);
-    this->declare_parameter("pick_y", 1.5);  // 2.5m away from table at y=4.0
-    this->declare_parameter("pick_z", 1.40);  // Raised approach height for wrist clearance
+    this->declare_parameter("pick_y", 4.0);  // Center of the workpiece on pick table (y=4.0)
+    this->declare_parameter("pick_z", 0.80);  // Center height of the cylinder
     // Place: robot base far from place target for clearance
     // Both accessible via wide door at Y ∈ [2.5, 5.5]
     this->declare_parameter("place_x", 4.5);
-    this->declare_parameter("place_y", -0.5);  // 2.5m away from target at y=2.0
+    this->declare_parameter("place_y", -4.0);  // Center of target container at place table (y=-4.0)
     this->declare_parameter("place_z", 0.75);
 
     // Get parameters

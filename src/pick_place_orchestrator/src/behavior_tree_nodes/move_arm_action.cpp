@@ -105,6 +105,8 @@ BT::NodeStatus MoveArmAction::onStart()
     target_pose.pose.orientation.w = 0.70710678 * std::cos(half_yaw);
 
     if (x_offset != 0.0) {
+      // Negate: yaw points FROM base TOWARD object, so subtracting places
+      // the TCP between the base and the object (standoff on the base side).
       target_pose.pose.position.x -= x_offset * std::cos(yaw);
       target_pose.pose.position.y -= x_offset * std::sin(yaw);
     }

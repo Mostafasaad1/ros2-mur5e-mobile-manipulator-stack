@@ -50,6 +50,7 @@ def generate_launch_description():
     place_x = LaunchConfiguration('place_x')
     place_y = LaunchConfiguration('place_y')
     place_z = LaunchConfiguration('place_z')
+    bypass_visual_servo = LaunchConfiguration('bypass_visual_servo')
 
     # Get package directory
     orchestrator_dir = get_package_share_directory('pick_place_orchestrator')
@@ -62,6 +63,7 @@ def generate_launch_description():
         launch_arguments={
             'headless': headless,
             'use_rviz': use_rviz,
+            'bypass_visual_servo': bypass_visual_servo,
         }.items()
     )
 
@@ -120,7 +122,7 @@ def generate_launch_description():
         ),
         DeclareLaunchArgument(
             'pick_z',
-            default_value='0.68',
+            default_value='0.80',
             description='Pick pose Z coordinate (world frame, table height + object height/2)'
         ),
         DeclareLaunchArgument(
@@ -137,6 +139,11 @@ def generate_launch_description():
             'place_z',
             default_value='0.75',
             description='Place pose Z coordinate (above container walls)'
+        ),
+        DeclareLaunchArgument(
+            'bypass_visual_servo',
+            default_value='false',
+            description='Bypass visual servo alignment step'
         ),
 
         # Launch the full system

@@ -96,6 +96,10 @@ private:
   // Enforces clearance from the table inflation zone even when the table
   // is not yet visible in the costmap.
   double target_clearance_radius_;
+  // Grasp offsets — must match the MoveArm BT XML x_offset / z_offset values
+  // so that IK validation targets the actual grasp pose, not the raw object pose.
+  double grasp_x_offset_;
+  double grasp_z_offset_;
 
 };
 

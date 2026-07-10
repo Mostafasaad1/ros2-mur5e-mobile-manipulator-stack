@@ -81,6 +81,7 @@ BT::PortsList VisualServoAction::providedPorts()
   return {
     BT::InputPort<geometry_msgs::msg::PoseStamped>("target_pose"),
     BT::InputPort<double>("x_offset"),
+    BT::InputPort<double>("z_offset"),
     BT::InputPort<double>("servo_threshold"),
     BT::InputPort<int>("max_iterations"),
     BT::InputPort<std::string>("phase"),
@@ -191,7 +192,7 @@ BT::NodeStatus VisualServoAction::onRunning()
 
   if (contours.empty()) {
     cv::imwrite(
-        "/home/mox/.gemini/antigravity/brain/93e3932c-2e82-4a2d-931d-ed97b8590283/wrist_camera_view.png",
+        "/tmp/wrist_camera_view.png",
         cv_ptr->image);
     RCLCPP_WARN(node_->get_logger(),
         "VisualServo: No yellow contours found! Saved image to wrist_camera_view.png");
@@ -338,9 +339,11 @@ BT::NodeStatus VisualServoAction::onRunning()
     return BT::NodeStatus::FAILURE;
   }
 
-  // Read approach x_offset from input port
+  // Read approach offsets from input ports
   double x_offset = 0.0;
+  double z_offset = 0.0;
   getInput("x_offset", x_offset);
+  getInput("z_offset", z_offset);
 
   // Get current pose of the gripper flange (ur5e_tool0)
   geometry_msgs::msg::PoseStamped current_pose = move_group_->getCurrentPose("ur5e_tool0");
@@ -353,15 +356,16 @@ BT::NodeStatus VisualServoAction::onRunning()
   tf2::Vector3 approach_dir = tf2::quatRotate(q, tf2::Vector3(0, 0, 1));
   double yaw = std::atan2(approach_dir.y(), approach_dir.x());
 
-  RCLCPP_WARN(node_->get_logger(),
-    "VisualServo DEBUG: approach_dir = [%.3f, %.3f, %.3f] | Gripper pointing sideways (Y-axis)",
+  RCLCPP_INFO(node_->get_logger(),
+    "VisualServo: Detected object at [%.3f, %.3f, %.3f], approach_dir=[%.3f, %.3f, %.3f]",
+    obj_planning.point.x, obj_planning.point.y, obj_planning.point.z,
     approach_dir.x(), approach_dir.y(), approach_dir.z());
 
   // Calculate the target standoff pose: align XY with object, but MAINTAIN current Z height
   // approach_dir.z ≈ 0 (gripper horizontal), so using it causes upward drift as camera sees object higher in frame
   target_pose.position.x = obj_planning.point.x - x_offset * approach_dir.x();
   target_pose.position.y = obj_planning.point.y - x_offset * approach_dir.y();
-  target_pose.position.z = current_pose.pose.position.z;  // KEEP CURRENT Z - no vertical motion!
+  target_pose.position.z = current_pose.pose.position.z;  // KEEP CURRENT Z - no vertical motion during servo!
 
   // Calculate alignment error relative to the standoff pose in 3D
   double error = std::sqrt(
@@ -382,7 +386,11 @@ BT::NodeStatus VisualServoAction::onRunning()
     RCLCPP_INFO(node_->get_logger(),
       "VisualServo: Aligned! error (%f) < threshold (%f)", error, d_->servo_threshold);
 
-    // Output corrected pose: the detected OBJECT position (final MoveArm will advance to this)
+    // Read the input target_pose to get the desired Z height
+    geometry_msgs::msg::PoseStamped input_target_pose;
+    getInput("target_pose", input_target_pose);
+
+    // Output corrected pose: detected XY position, and the detected OBJECT Z position for height
     geometry_msgs::msg::PoseStamped corrected_base;
     corrected_base.header.frame_id = move_group_->getPlanningFrame();
     corrected_base.header.stamp = node_->now();

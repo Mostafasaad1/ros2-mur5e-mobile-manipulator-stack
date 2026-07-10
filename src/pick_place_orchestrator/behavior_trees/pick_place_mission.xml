@@ -29,18 +29,19 @@
                         step="EXECUTE_PICK"
                         step_index="4" />
                         
-        <!-- Approach with 20cm standoff + 10cm elevation - avoids wrist hitting table -->
+        <!-- Approach with 20cm standoff at cylinder center height -->
         <MoveArm target_pose="{pick_pose}"
                  x_offset="0.20"
-                 z_offset="0.10"
+                 z_offset="0.0"
                  planner_id="PTP"
                  phase="PICK_PHASE"
                  step="EXECUTE_PICK"
                  step_index="4" />
 
-        <!-- Visual servo maintains 20cm standoff for camera view -->
+        <!-- Visual servo maintains 20cm standoff at center height, aligns with cylinder side contours -->
         <VisualServo target_pose="{pick_pose}"
                      x_offset="0.20"
+                     z_offset="0.0"
                      corrected_pose="{corrected_pick_pose}"
                      servo_threshold="0.025"
                      max_iterations="5"
@@ -48,10 +49,13 @@
                      step="EXECUTE_PICK"
                      step_index="4" />
                         
-        <!-- Advance to grasp - small 3cm standoff so fingers wrap around object, not push it -->
+        <!-- Advance to grasp - TCP 3cm before center so fingers wrap around object -->
         <MoveArm target_pose="{corrected_pick_pose}"
                  x_offset="0.03"
-                 planner_id="LIN"
+                 z_offset="0.0"
+                 planner_id="PTP"
+                 velocity_scaling="0.15"
+                 acceleration_scaling="0.15"
                  phase="PICK_PHASE"
                  step="EXECUTE_PICK"
                  step_index="4" />
@@ -68,10 +72,15 @@
                        step="ATTACH_PAYLOAD"
                        step_index="5" />
         
-        <!-- Lift straight up after payload is attached to planning scene -->
+        <!-- Lift straight up after payload is attached to planning scene.
+             PTP (joint-space) avoids the near-singular IK configurations that
+             Cartesian LIN forces at this grasp pose, causing elbow velocity violations. -->
         <MoveArm target_pose="{corrected_pick_pose}"
-                 z_offset="0.12"
-                 planner_id="LIN"
+                 x_offset="0.03"
+                 z_offset="0.15"
+                 planner_id="PTP"
+                 velocity_scaling="0.30"
+                 acceleration_scaling="0.30"
                  phase="PICK_PHASE"
                  step="EXECUTE_PICK"
                  step_index="4" />
@@ -141,10 +150,14 @@
                            step="DETACH_PAYLOAD"
                            step_index="11" />
 
-            <!-- Retract vertically to clear container walls (15cm matches approach clearance) -->
+            <!-- Retract to clear container walls.
+                 PTP (joint-space) avoids the same elbow singularity that LIN causes
+                 when the arm is in a deep place configuration near the container. -->
             <MoveArm target_pose="{place_pose}"
                      z_offset="0.15"
-                     planner_id="LIN"
+                     planner_id="PTP"
+                     velocity_scaling="0.30"
+                     acceleration_scaling="0.30"
                      phase="PLACE_PHASE"
                      step="EXECUTE_PLACE"
                      step_index="10" />
