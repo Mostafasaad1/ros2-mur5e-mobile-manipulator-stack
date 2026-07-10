@@ -39,6 +39,17 @@
         <joint name="finger_left_joint" value="0.035" />
         <joint name="finger_right_joint" value="0.035" />
     </group_state>
+    <!-- grasp_ready: elbow-up, shoulder facing +Y (~90deg), wrist horizontal.
+         Used as IK seed for PTP approach moves to prevent KDL solver from
+         choosing an elbow-flipped configuration that misaligns the wrist camera. -->
+    <group_state name="grasp_ready" group="robot_arm">
+        <joint name="ur5e_shoulder_pan_joint" value="1.5708" />
+        <joint name="ur5e_shoulder_lift_joint" value="-1.5708" />
+        <joint name="ur5e_elbow_joint" value="1.5708" />
+        <joint name="ur5e_wrist_1_joint" value="-1.5708" />
+        <joint name="ur5e_wrist_2_joint" value="-1.5708" />
+        <joint name="ur5e_wrist_3_joint" value="0.0" />
+    </group_state>
 
     <!-- End Effector -->
     <end_effector name="hand" parent_link="ur5e_tool0" group="hand" parent_group="robot_arm" />

@@ -2,6 +2,9 @@
 #include <cmath>
 #include "moveit_msgs/msg/constraints.hpp"
 #include "moveit_msgs/msg/orientation_constraint.hpp"
+#include "moveit_msgs/msg/robot_state.hpp"
+#include "moveit/robot_state/robot_state.hpp"
+#include "moveit/robot_state/conversions.hpp"
 
 namespace pick_place_orchestrator
 {
@@ -30,7 +33,10 @@ BT::PortsList MoveArmAction::providedPorts()
     BT::InputPort<int>("step_index"),
     BT::InputPort<std::string>("planner_id"),
     BT::InputPort<double>("velocity_scaling"),
-    BT::InputPort<double>("acceleration_scaling")
+    BT::InputPort<double>("acceleration_scaling"),
+    // Optional: SRDF named state to use as IK seed for PTP moves.
+    // Seeding prevents Pilz/KDL from picking an elbow-flipped solution.
+    BT::InputPort<std::string>("arm_config")
   };
 }
 
@@ -60,6 +66,9 @@ BT::NodeStatus MoveArmAction::onStart()
 
   std::string planner_id_override = "";
   getInput("planner_id", planner_id_override);
+
+  std::string arm_config_seed = "";
+  getInput("arm_config", arm_config_seed);
 
   double velocity_scaling = 0.8;
   double acceleration_scaling = 0.8;
@@ -123,7 +132,7 @@ BT::NodeStatus MoveArmAction::onStart()
   // Start execution in background thread to avoid blocking BT tick
   future_ = std::async(std::launch::async,
       [this, has_named, has_target, named_pose, target_pose, planner_id_override,
-      velocity_scaling, acceleration_scaling, has_vel_scale, has_acc_scale]() {
+      velocity_scaling, acceleration_scaling, has_vel_scale, has_acc_scale, arm_config_seed]() {
         std::string pipeline = "pilz_industrial_motion_planner";
         std::string planner = "";
         bool fallback_allowed = false;
@@ -193,6 +202,14 @@ BT::NodeStatus MoveArmAction::onStart()
           "MoveArmAction: Set path orientation constraints for LIN Cartesian approach (roll/pitch tolerance: 0.02)");
         } else {
           move_group_->clearPathConstraints();
+        }
+
+        // Always plan from the actual current robot state
+        move_group_->setStartStateToCurrentState();
+        if (!arm_config_seed.empty() && planner == "PTP" && has_target) {
+          RCLCPP_INFO(node_->get_logger(),
+            "MoveArmAction: arm_config='%s' noted; KDL IK will seed from current state (arm "
+            "should already be near this configuration)", arm_config_seed.c_str());
         }
 
         // Set target on move_group

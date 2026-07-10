@@ -35,8 +35,16 @@ joint_limits:
     max_velocity: 0.5
     has_acceleration_limits: true
     max_acceleration: 5.0
+    # Explicit position limits match URDF upper=0.041 (+1mm over 0.04 closed)
+    # so that CheckStartStateBounds never rejects the gripper-open plan.
+    has_position_limits: true
+    min_position: -0.001
+    max_position: 0.041
   finger_right_joint:
     has_velocity_limits: true
     max_velocity: 0.5
     has_acceleration_limits: true
     max_acceleration: 5.0
+    has_position_limits: true
+    min_position: -0.001
+    max_position: 0.041

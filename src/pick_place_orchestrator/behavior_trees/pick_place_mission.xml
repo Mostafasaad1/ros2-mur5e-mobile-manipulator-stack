@@ -29,6 +29,15 @@
                         step="EXECUTE_PICK"
                         step_index="4" />
                         
+        <!-- Pre-position arm to grasp_ready before approach.
+             This ensures KDL IK for the approach PTP always seeds from
+             the correct elbow-up configuration, preventing elbow-flip across runs. -->
+        <MoveArm named_pose="grasp_ready"
+                 planner_id="PTP"
+                 phase="PICK_PHASE"
+                 step="EXECUTE_PICK"
+                 step_index="4" />
+
         <!-- Approach with 20cm standoff at cylinder center height -->
         <MoveArm target_pose="{pick_pose}"
                  x_offset="0.20"
