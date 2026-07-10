@@ -29,7 +29,7 @@ This single command will:
 - Launch Nav2 for navigation
 - Start MoveIt for motion planning
 - Bring up the optimizer and orchestrator
-- Automatically trigger the pick-and-place mission after 25 seconds
+- Automatically trigger the pick-and-place mission after 80 seconds
 
 ### Monitor Progress
 
@@ -96,17 +96,17 @@ The orchestrator executes a 12-step behavior tree:
 1. **Target Acquisition Pick** - Validate pick pose
 2. **Optimize Pick Pose** - Calculate optimal base position
 3. **Navigate to Pick** - Drive to optimized base pose
-4. **Execute Pick** - Open gripper → Move arm → Close gripper
-5. **Attach Payload** - Attach object to planning scene
-6. **Stow Arm Pick** - Move arm to safe travel position
+4. **Execute Pick** - Open gripper → Move arm to `grasp_ready` [PTP] → Move arm to 20cm standoff [PTP] → Visual Servo (align wrist camera to cylinder side contours) → Advance to 3cm standoff [PTP] → Close gripper
+5. **Attach Payload** - Attach object to planning scene → Lift arm 15cm [PTP]
+6. **Stow Arm Pick** - Move arm to safe travel position (`stowed` named pose [PTP])
 
 ### Place Phase (Steps 7-12)
 7. **Target Acquisition Place** - Validate place pose
 8. **Optimize Place Pose** - Calculate optimal base position
 9. **Navigate to Place** - Drive to optimized base pose
-10. **Execute Place** - Move arm → Open gripper
-11. **Detach Payload** - Remove object from planning scene
-12. **Stow Arm Place** - Return arm to stowed position
+10. **Execute Place** - Move arm to 15cm approach above table [PTP] → Descend to place pose [LIN] → Open gripper
+11. **Detach Payload** - Remove object from planning scene → Retract arm 15cm [PTP]
+12. **Stow Arm Place** - Return arm to stowed position [PTP]
 
 ## Deterministic Motion Planning Configuration
 

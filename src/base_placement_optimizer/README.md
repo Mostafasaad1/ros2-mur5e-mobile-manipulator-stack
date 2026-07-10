@@ -16,10 +16,15 @@ For a detailed explanation of the system architecture, algorithm flowcharts, and
 | `map_frame` | string | `map` | The global reference frame. |
 | `planning_group` | string | `robot_arm` | The MoveIt planning group for the manipulator. |
 | `costmap_topic` | string | `/global_costmap/costmap` | Topic name for the Nav2 OccupancyGrid costmap. |
-| `reach_radius` | double | `0.7` | The radial distance from the target object to sample candidate base poses. |
+| `reach_radius` | double | `0.80` | The nominal radial distance from the target object to sample candidate base poses. |
 | `angular_samples` | int | `16` | Number of radial samples around the target object to evaluate. |
-| `ik_timeout` | double | `0.002` | Timeout in seconds for each inverse kinematics evaluation. |
+| `ik_timeout` | double | `0.050` | Timeout in seconds for each inverse kinematics evaluation. |
 | `alpha` | double | `0.5` | Weight factor `[0.0, 1.0]` balancing manipulability and path distance in the scoring function. |
+| `max_nav_distance` | double | `12.0` | Discards candidates farther than this from the robot's current pose to avoid navigation planning outside the costmap. |
+| `robot_base_frame` | string | `base_footprint` | The frame of the mobile robot base. |
+| `target_clearance_radius` | double | `0.80` | Minimum radial distance candidates must maintain from the target object to avoid physical collision with tables. |
+| `grasp_x_offset` | double | `0.20` | The tool X offset from the object center utilized during grasp validation. |
+| `grasp_z_offset` | double | `0.20` | The tool Z offset from the object center utilized during grasp validation. |
 
 ## Quickstart
 
