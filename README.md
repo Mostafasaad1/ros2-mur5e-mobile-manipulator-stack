@@ -98,8 +98,8 @@ mobile_manipulator/
 ### `mobile_manipulator_description`
 Provides the unified robot URDF/xacro.
 
-- **`mobile_manipulator.urdf.xacro`** — Assembles the MiR 100 base, UR5e arm (mounted on the `surface` link), safety collision volume, and parallel-jaw gripper.
-- **`mobile_manipulator.gazebo.xacro`** — Adds Gazebo plugins (ros2_control, differential drive, depth camera, IMU, etc.).
+- **`mobile_manipulator.urdf.xacro`** — Assembles the MiR 100 base, UR5e arm (mounted on the `surface` link), safety collision volume, parallel-jaw gripper, and an **Intel RealSense D435 camera** mounted on the end-effector (`ur5e_tool0`) for visual servoing alignment.
+- **`mobile_manipulator.gazebo.xacro`** — Adds Gazebo plugins (ros2_control, differential drive, wrist depth camera, IMU, etc.).
 
 <br/>
 <img width="480" height="270" alt="Robot Description Visualisation" src="https://github.com/user-attachments/assets/cc760f68-91d3-4b93-b585-bd319e97ae51" />
@@ -107,7 +107,8 @@ Provides the unified robot URDF/xacro.
 ### `mobile_manipulator_gazebo`
 Simulation world and launch infrastructure.
 
-- **World**: `worlds/nav_workspace.sdf` — Table, shelving, and target workpiece in a realistic warehouse scene.
+- **World**: `worlds/nav_workspace.sdf` — Table, shelving, and target workpiece in a realistic warehouse scene. Includes 2 static monitoring cameras and a top-down overview camera to visualize navigation and manipulation.
+- **Gazebo GUI**: Configured via `config/gazebo_gui.config` to dock the 3D View and display live monitoring feeds of the workspace and robot.
 - **`simulation.launch.py`** — Brings up Gazebo Harmonic, spawns the robot, starts all `ros_gz_bridge` topics (cmd_vel, odom, tf, joint_states, camera/points), and sequences controller spawners via event handlers.
 
 | Launch arg | Default | Description |
@@ -141,6 +142,7 @@ Auto-generated (and hand-tuned) MoveIt 2 configuration.
 
 - Planning group: `robot_arm` (UR5e joints).
 - SRDF defines `stowed` named state for safe travel.
+- **Deterministic Motion Planning**: Configured with the **Pilz Industrial Motion Planner** pipeline (`CommandPlanner`) for deterministic named (`PTP`) and straight-line Cartesian (`LIN`) trajectories. Enforces strict end-effector roll/pitch locking ($\pm 0.02$ rad) during Cartesian approaches/retreats, with automatic fallback to **OMPL** only for free-space/named transitions. Aborts immediately on linear approach planning failure to ensure safety.
 
 <br/>
 <img width="480" height="270" alt="MoveIt 2 Joint Trajectory Control" src="https://github.com/user-attachments/assets/d9dbdd4d-0688-4eb1-a44a-e8ef7e992d2f" />
@@ -176,6 +178,7 @@ The mission executive. Exposes a `PickPlaceMission` action server and drives exe
 | `OptimizePose` | Action | Call `optimize_placement` action |
 | `NavigateToPose` | Action | Send Nav2 NavigateToPose goal |
 | `MoveArm` | Action | Execute MoveIt 2 Cartesian or named-pose goal |
+| `VisualServo` | Action | Refine end-effector alignment using wrist depth camera feedback |
 | `GripperControl` | Action | Open / close gripper via `gripper_controller` |
 | `AttachPayload` | Action | Attach collision object to `ur5e_tool0` in MoveIt |
 | `DetachPayload` | Action | Detach collision object from `ur5e_tool0` |
@@ -187,17 +190,28 @@ Steps 1-6  (PICK_PHASE):
   1. TargetAcquisition(pick)
   2. OptimizePose(pick)  →  optimized_pick_base_pose
   3. NavigateToPose(optimized_pick_base_pose)
-  4. GripperOpen → MoveArm(pick_pose) → GripperClose
+  4. Execute Pick:
+     - GripperOpen
+     - MoveArm(grasp_ready) [PTP]
+     - MoveArm(pick_pose + 20cm standoff) [PTP]
+     - VisualServo (align wrist camera to cylinder side contours)
+     - MoveArm(pick_pose + 3cm advance) [PTP]
+     - GripperClose
   5. AttachPayload
-  6. MoveArm(stowed)
+     - MoveArm(pick_pose + 15cm lift) [PTP]
+  6. MoveArm(stowed) [PTP]
 
 Steps 7-12 (PLACE_PHASE, optional):
   7. TargetAcquisition(place)
   8. OptimizePose(place)  →  optimized_place_base_pose
   9. NavigateToPose(optimized_place_base_pose)
- 10. MoveArm(place_pose) → GripperOpen
+ 10. Execute Place:
+     - MoveArm(place_pose + 15cm approach) [PTP]
+     - MoveArm(place_pose) [LIN]
+     - GripperOpen
  11. DetachPayload
- 12. MoveArm(stowed)
+     - MoveArm(place_pose + 15cm retract) [PTP]
+ 12. MoveArm(stowed) [PTP]
 
 Recovery (on any failure):
   DetachPayload → MoveArm(stowed) → AlwaysFailure
@@ -239,45 +253,65 @@ colcon build --symlink-install
 source install/setup.bash
 ```
 
-### 3. Run the Full Pick-and-Place Simulation
+### 3. Run the Full Pick-and-Place Mission (Auto-Triggered)
 
-Launch everything with a single command:
+You can launch the entire stack (Gazebo simulation, Nav2, MoveIt 2, Base Placement Optimizer, BT Orchestrator) and automatically trigger the 12-step pick-and-place mission:
+
+- **Via the Quickstart Script**:
+  ```bash
+  ./run_pick_place_mission.sh
+  ```
+
+- **Via ROS 2 Launch**:
+  ```bash
+  ros2 launch pick_place_orchestrator pick_place_mission.launch.py
+  ```
+
+**Options**:
+```bash
+# Run Gazebo in headless mode (no GUI)
+ros2 launch pick_place_orchestrator pick_place_mission.launch.py headless:=true
+
+# Launch without auto-starting the mission (manual trigger)
+ros2 launch pick_place_orchestrator pick_place_mission.launch.py auto_start:=false
+
+# Pass custom pick and place locations
+ros2 launch pick_place_orchestrator pick_place_mission.launch.py \
+  pick_x:=4.5 pick_y:=4.0 pick_z:=0.80 \
+  place_x:=4.5 place_y:=-4.0 place_z:=0.75
+```
+
+The mission trigger node will send the action goal after an 80-second delay, allowing all system layers (localization, costmaps, planning scenes) to fully initialize.
+
+### 4. Run the Validation Stack (Manual/Custom Goals)
+
+Alternatively, bring up the entire stack *without* auto-starting the mission immediately:
 
 ```bash
 ros2 launch pick_place_orchestrator validation.launch.py
 ```
 
-**Options**:
-
-```bash
-# Headless simulation (no Gazebo GUI) + RViz
-ros2 launch pick_place_orchestrator validation.launch.py headless:=true use_rviz:=true
-
-# With GUI, no RViz
-ros2 launch pick_place_orchestrator validation.launch.py headless:=false use_rviz:=false
-```
-
-The orchestrator starts automatically after a 10-second delay to allow MoveIt 2 and Nav2 to fully initialize.
-
-### 4. Send a Mission Goal Manually
+Then, send a mission goal manually in another terminal:
 
 ```bash
 ros2 action send_goal /pick_place_mission \
   pick_place_orchestrator/action/PickPlaceMission \
-  "{pick_pose: {header: {frame_id: 'map'}, pose: {position: {x: 1.5, y: 0.5, z: 0.8}}}}"
+  "{pick_pose: {header: {frame_id: 'map'}, pose: {position: {x: 4.5, y: 4.0, z: 0.80}, orientation: {w: 1.0}}}, \
+    place_pose: {header: {frame_id: 'map'}, pose: {position: {x: 4.5, y: -4.0, z: 0.75}, orientation: {w: 1.0}}}}"
 ```
 
 ---
 
 ## Launch Reference
 
-All 19 launch files across all packages are documented in **[LAUNCH.md](LAUNCH.md)**, including every argument, its default value, and concrete `ros2 launch` examples.
+All launch files across all packages are documented in **[LAUNCH.md](LAUNCH.md)**, including every argument, its default value, and concrete `ros2 launch` examples.
 
 Quick summary of the most-used files:
 
 | Launch File | Package | What it starts |
 |---|---|---|
-| [`validation.launch.py`](src/pick_place_orchestrator/launch/validation.launch.py) | `pick_place_orchestrator` | ⭐ **Full stack** — sim + Nav2 + MoveIt + optimizer + orchestrator |
+| [`pick_place_mission.launch.py`](src/pick_place_orchestrator/launch/pick_place_mission.launch.py) | `pick_place_orchestrator` | 🚀 **Complete Mission** — brings up the full stack and auto-starts the pick-and-place sequence |
+| [`validation.launch.py`](src/pick_place_orchestrator/launch/validation.launch.py) | `pick_place_orchestrator` | ⭐ **Full stack** — sim + Nav2 + MoveIt + optimizer + orchestrator (no auto-start) |
 | [`orchestrator.launch.py`](src/pick_place_orchestrator/launch/orchestrator.launch.py) | `pick_place_orchestrator` | Orchestrator node only (assumes stack is up) |
 | [`optimizer_demo.launch.py`](src/base_placement_optimizer/launch/optimizer_demo.launch.py) | `base_placement_optimizer` | Sim + Nav2 + MoveIt + optimizer (no orchestrator) |
 | [`simulation.launch.py`](src/mobile_manipulator_gazebo/launch/simulation.launch.py) | `mobile_manipulator_gazebo` | Gazebo + robot spawn + all bridges + controllers |

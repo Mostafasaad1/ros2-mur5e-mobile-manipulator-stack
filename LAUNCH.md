@@ -30,6 +30,36 @@ source install/setup.bash
 
 > **Master mission executive.** Hosts the `PickPlaceMission` action server and drives the 12-step pick-and-place BehaviorTree. Depends on the full simulation + MoveIt + Nav2 + optimizer stack being up.
 
+### `pick_place_mission.launch.py` 🚀 Complete Mission Entry Point
+
+Brings up the **entire system** (Gazebo simulation, Nav2 navigation stack, MoveIt 2 planning, base placement optimizer, and the BT orchestrator) and automatically triggers the pick-and-place mission.
+
+```bash
+# Default: runs everything, shows Gazebo GUI, and triggers mission after 80s
+ros2 launch pick_place_orchestrator pick_place_mission.launch.py
+
+# Headless mode (no Gazebo GUI) with RViz
+ros2 launch pick_place_orchestrator pick_place_mission.launch.py headless:=true
+
+# Bring up the stack without auto-starting the mission
+ros2 launch pick_place_orchestrator pick_place_mission.launch.py auto_start:=false
+```
+
+| Argument | Default | Description |
+|---|---|---|
+| `headless` | `false` | Run Gazebo in headless mode (no GUI) |
+| `use_rviz` | `true` | Launch RViz2 for visualization |
+| `auto_start` | `true` | Automatically trigger the pick-and-place mission |
+| `pick_x` | `4.5` | Pick pose X coordinate (world frame) |
+| `pick_y` | `4.0` | Pick pose Y coordinate (world frame) |
+| `pick_z` | `0.80` | Pick pose Z coordinate (world frame, table height + object height/2) |
+| `place_x` | `4.5` | Place pose X coordinate (world frame) |
+| `place_y` | `-4.0` | Place pose Y coordinate (world frame) |
+| `place_z` | `0.75` | Place pose Z coordinate (above container walls) |
+| `bypass_visual_servo` | `false` | Bypass visual servo alignment step |
+
+---
+
 ### `validation.launch.py` ⭐ Unified entry point
 
 Brings up the **entire system** in one command: Gazebo simulation → Nav2 → MoveIt 2 → base placement optimizer → orchestrator (with a 10 s startup delay).
