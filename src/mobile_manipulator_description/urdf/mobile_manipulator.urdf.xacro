@@ -117,10 +117,10 @@
     <child link="finger_left" />
     <origin xyz="0.0 0.01 0.0" rpy="0 0 0" />
     <axis xyz="0 1 0" />
-    <!-- limit: lower=-0.001 (fully open, inward) upper=0.041 (closed+1mm buffer)
-         The extra 1mm buffer prevents MoveIt CheckStartStateBounds from rejecting
-         the gripper-open plan when joint state feedback lands exactly at 0.04. -->
-    <limit lower="-0.001" upper="0.041" effort="300.0" velocity="0.5" />
+    <!-- limit: lower=-0.01 (closed with buffer) upper=0.06 (open with buffer)
+         The extra buffers prevent MoveIt CheckStartStateBounds from rejecting
+         the gripper plans when joint state feedback drifts due to object contact. -->
+    <limit lower="-0.01" upper="0.06" effort="300.0" velocity="0.5" />
   </joint>
 
   <joint name="finger_right_joint" type="prismatic">
@@ -129,7 +129,7 @@
     <origin xyz="0.0 -0.01 0.0" rpy="0 0 0" />
     <axis xyz="0 -1 0" />
     <!-- Same buffer as finger_left_joint -->
-    <limit lower="-0.001" upper="0.041" effort="300.0" velocity="0.5" />
+    <limit lower="-0.01" upper="0.06" effort="300.0" velocity="0.5" />
   </joint>
 
   <!-- Wrist depth camera for visual servoing -->
