@@ -16,8 +16,19 @@ An autonomous mobile manipulation system built on **ROS 2 Jazzy** and **Gazebo H
 
 ---
 
+## Demo / Showcasing
+
+Watch the full, autonomous 12-step pick-and-place mission in action:
+
+<p align="center">
+  <video width="640" height="360" src="https://github.com/user-attachments/assets/ae783f16-9604-42a9-8498-a8ca07e86a3c" controls alt="Full Working Pick and Place Example"></video>
+</p>
+
+---
+
 ## Table of Contents
 
+- [Demo / Showcasing](#demo--showcasing)
 - [System Overview](#system-overview)
 - [Hardware & Simulation Stack](#hardware--simulation-stack)
 - [Repository Layout](#repository-layout)
@@ -216,6 +227,8 @@ Steps 7-12 (PLACE_PHASE, optional):
 Recovery (on any failure):
   DetachPayload → MoveArm(stowed) → AlwaysFailure
 ```
+
+> 📺 **See the [Demo / Showcasing](#demo--showcasing) section at the top of the page for a video of the full mission in action.**
 
 ---
 
