@@ -377,22 +377,6 @@ map
 
 ---
 
-## Prerequisites
-
-| Requirement | Version |
-|---|---|
-| ROS 2 | Jazzy |
-| Gazebo | Harmonic |
-| MoveIt 2 | Jazzy release |
-| Nav2 | Jazzy release |
-| BehaviorTree.CPP | 4.x |
-| slam_toolbox | Jazzy release |
-| ros2_control | Jazzy release |
-| Python | 3.10+ |
-| CMake | 3.22+ |
-
----
-
 ## License
 
 Apache-2.0 — see individual `package.xml` files for per-package declarations.
